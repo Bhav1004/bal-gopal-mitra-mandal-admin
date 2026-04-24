@@ -892,7 +892,7 @@ function sendNotif() {
         sentAt:       new Date(),
         sentBy:       state.user ? state.user.email : 'admin',
         successCount: ok,
-        failureCount: fail,
+        failureCount: fails.length,
         totalDevices: tokens.length
       });
 
