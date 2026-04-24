@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bal Gopal Mitra Mandal — Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { colors: { mandal: { orange:'#E65100', amber:'#FF8F00', light:'#FFF5E1' } } } }
+  }
+</script>
+<!-- Firebase SDK (modular via compat for CDN) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<style>
+  [x-cloak]{display:none!important}
+  .fade{animation:fadeIn .2s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  textarea{font-family:inherit}
+  .chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
+  .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-900 antialiased">
+
+<!-- ═══════════════════════════════════════════════════════════════════════ APP -->
+<div id="app"></div>
+
+<script>
+// ─── Firebase config ──────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey:            'AIzaSyAvhjTvs-Edpuk4Fwu2gj1r5BZY5owF8O4',
+  authDomain:        'bal-gopal-mitra-mandal.firebaseapp.com',
+  projectId:         'bal-gopal-mitra-mandal',
+  storageBucket:     'bal-gopal-mitra-mandal.firebasestorage.app',
+  messagingSenderId: '204903030798',
+  appId:             '1:204903030798:web:d6e58695643156ba3bdc5f'   // ← Firebase console → Project Settings → Web App → appId
+};
+firebase.initializeApp(firebaseConfig);
+const auth    = firebase.auth();
+const db      = firebase.firestore();
+const storage = firebase.storage();
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let state = {
+  user:    null,
+  page:    'login',      // login | dashboard | updates | schedule | aarti | feedback | gallery
+  loading: false,
+  modal:   null,         // { type, data }
+  data:    {},
+  albums:  [],
+  activeAlbum: null,
+};
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const el = (tag, cls, html='') => { const e=document.createElement(tag); e.className=cls; e.innerHTML=html; return e; };
+const fmt = ts => ts ? new Date(ts).toLocaleDateString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+
+function toast(msg, ok=true) {
+  const t = el('div',`fixed top-4 right-4 z-[9999] px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white fade ${ok?'bg-green-600':'bg-red-600'}`, msg);
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+const TAG_COLORS = {
+  puja:'bg-orange-100 text-orange-800', event:'bg-green-100 text-green-800',
+  notice:'bg-blue-100 text-blue-800', traffic:'bg-yellow-100 text-yellow-800',
+  emergency:'bg-red-100 text-red-800'
+};
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+auth.onAuthStateChanged(user => {
+  state.user = user;
+  render(user ? (state.page === 'login' ? 'dashboard' : state.page) : 'login');
+});
+
+async function login(email, pw) {
+  try { await auth.signInWithEmailAndPassword(email, pw); toast('Welcome back!'); }
+  catch(e) { toast(e.code==='auth/invalid-credential'?'Invalid email or password':e.message, false); }
+}
+async function logout() { await auth.signOut(); toast('Signed out'); render('login'); }
+
+// ─── Firestore helpers ────────────────────────────────────────────────────────
+const col = name => db.collection(name);
+
+async function getAll(name, order='timestamp', dir='desc') {
+  const snap = await col(name).orderBy(order, dir).get();
+  return snap.docs.map(d => ({ id:d.id, ...d.data() }));
+}
+const addDoc  = (name,data) => col(name).add(data);
+const setDoc  = (name,id,data) => col(name).doc(id).set(data, {merge:true});
+const delDoc  = (name,id) => col(name).doc(id).delete();
+
+// ─── Page loaders ─────────────────────────────────────────────────────────────
+async function loadPage(page) {
+  state.loading = true; renderShell(page);
+  try {
+    if (page==='dashboard') {
+      const [u,a,f,t] = await Promise.all([
+        col('updates').get(), col('aartis').get(),
+        col('feedback').get(), col('device_tokens').get()
+      ]);
+      const unread = f.docs.filter(d=>!d.data().isRead).length;
+      state.data = { updates:u.size, aartis:a.size, feedback:f.size, unread, devices:t.size };
+    } else if (page==='updates')  { state.data.list = await getAll('updates'); }
+    else if (page==='schedule')   { state.data.list = await getAll('schedule','dayNumber','asc'); }
+    else if (page==='aarti')      { state.data.list = await getAll('aartis','order','asc'); }
+    else if (page==='feedback')   { state.data.list = await getAll('feedback'); }
+    else if (page==='gallery') {
+      const snap = await col('gallery').orderBy('year','desc').get();
+      state.albums = snap.docs.map(d=>({id:d.id,...d.data()}));
+    }
+  } catch(e) { toast('Failed to load data: '+e.message, false); }
+  state.loading = false; renderShell(page);
+}
+
+// ─── Render engine ────────────────────────────────────────────────────────────
+function render(page) {
+  state.page = page;
+  if (page === 'login') { renderLogin(); return; }
+  renderShell(page);
+  loadPage(page);
+}
+
+function renderLogin() {
+  $('app').innerHTML = `
+  <div class="min-h-screen bg-orange-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
+      <div class="text-center mb-8">
+        <div class="text-5xl mb-3">🙏</div>
+        <h1 class="text-2xl font-bold text-gray-900">Bal Gopal Mitra Mandal</h1>
+        <p class="text-sm text-gray-500 mt-1">Admin Panel · Sign In</p>
+      </div>
+      <form id="loginForm" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+          <input id="loginEmail" type="email" required placeholder="admin@mandal.com" autocomplete="email"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input id="loginPw" type="password" required placeholder="••••••••" autocomplete="current-password"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"/>
+        </div>
+        <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 rounded-lg transition-colors">
+          Sign In
+        </button>
+      </form>
+      <p class="text-center text-xs text-gray-400 mt-6">Admin access only · Ganeshotsav 2026</p>
+    </div>
+  </div>`;
+  $('loginForm').onsubmit = e => { e.preventDefault(); login($('loginEmail').value, $('loginPw').value); };
+}
+
+function navLink(page, icon, label) {
+  const active = state.page===page;
+  return `<a href="#" onclick="render('${page}');return false"
+    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active?'bg-orange-50 text-orange-700':'text-gray-600 hover:bg-gray-50'}">
+    <span class="text-base">${icon}</span>${label}</a>`;
+}
+
+function renderShell(page) {
+  $('app').innerHTML = `
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-56 min-h-screen bg-white border-r border-gray-200 flex flex-col fixed top-0 left-0 h-full z-40">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <div class="text-2xl mb-1">🙏</div>
+        <h1 class="font-bold text-gray-900 text-sm leading-tight">Bal Gopal Mitra Mandal</h1>
+        <p class="text-xs text-orange-600 font-medium">Admin Panel</p>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        ${navLink('dashboard','📊','Dashboard')}
+        ${navLink('updates','📢','Updates')}
+        ${navLink('schedule','📅','Schedule')}
+        ${navLink('aarti','🙏','Aarti')}
+        ${navLink('gallery','🖼️','Gallery')}
+        ${navLink('feedback','💬','Feedback')}
+      </nav>
+      <div class="px-4 py-4 border-t border-gray-100">
+        <p class="text-xs text-gray-400 truncate mb-2">${state.user?.email||''}</p>
+        <button onclick="logout()" class="text-sm text-red-500 hover:text-red-700 font-medium">Sign out →</button>
+      </div>
+    </aside>
+    <!-- Main content -->
+    <main class="flex-1 ml-56 p-6 min-h-screen" id="mainContent">
+      <div class="flex items-center justify-center h-40">
+        <div class="text-gray-400 text-sm animate-pulse">Loading…</div>
+      </div>
+    </main>
+  </div>
+  <div id="modalContainer"></div>`;
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const d = state.data;
+  $('mainContent').innerHTML = `
+  <div>
+    <div class="mb-6"><h2 class="text-2xl font-bold text-gray-900">Dashboard</h2><p class="text-sm text-gray-500 mt-1">Ganeshotsav 2026 · Overview</p></div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      ${statCard('📢','Total Updates',d.updates)}
+      ${statCard('🙏','Aartis',d.aartis)}
+      ${statCard('💬','Feedback',d.feedback, d.unread>0?`${d.unread} unread`:'')}
+      ${statCard('📱','Devices',d.devices)}
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 class="font-semibold text-gray-800 mb-4">Quick Actions</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        ${quickLink('updates','✏️','Post Update')}
+        ${quickLink('schedule','📅','Edit Schedule')}
+        ${quickLink('aarti','🙏','Manage Aartis')}
+        ${quickLink('feedback','💬','View Feedback')}
+      </div>
+    </div>
+  </div>`;
+}
+const statCard = (icon,label,val,sub='') => `
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <div class="flex items-center gap-3 mb-3"><span class="text-2xl">${icon}</span><p class="text-sm text-gray-500 font-medium">${label}</p></div>
+    <p class="text-3xl font-bold text-gray-900">${val??0}</p>
+    ${sub?`<p class="text-xs text-orange-600 mt-1 font-medium">${sub}</p>`:''}
+  </div>`;
+const quickLink = (page,icon,label) => `
+  <a href="#" onclick="render('${page}');return false"
+    class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-100 hover:border-orange-200 hover:bg-orange-50 transition-colors text-center">
+    <span class="text-2xl">${icon}</span><span class="text-xs font-medium text-gray-700">${label}</span>
+  </a>`;
+
+// ─── Updates ──────────────────────────────────────────────────────────────────
+function renderUpdates() {
+  const list = state.data.list || [];
+  $('mainContent').innerHTML = `
+  <div>
+    <div class="flex items-center justify-between mb-6">
+      <div><h2 class="text-2xl font-bold text-gray-900">Updates</h2><p class="text-sm text-gray-500">Manage mandal announcements</p></div>
+      <button onclick="openUpdateModal(null)" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">+ New Update</button>
+    </div>
+    ${list.length===0?emptyState('No updates yet. Create the first one!'):
+      `<div class="space-y-3">${list.map(u=>updateCard(u)).join('')}</div>`}
+  </div>`;
+}
+const updateCard = u => `
+  <div class="bg-white rounded-xl border ${u.isPinned?'border-orange-300 bg-orange-50':'border-gray-200'} p-4 flex gap-4 items-start">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-1 flex-wrap">
+        ${u.isPinned?'<span class="text-xs font-bold text-orange-600">📌 Pinned</span>':''}
+        <span class="chip ${TAG_COLORS[u.tag]||'bg-gray-100 text-gray-700'}">${capitalize(u.tag)}</span>
+        <span class="text-xs text-gray-400">${fmt(u.timestamp)}</span>
+      </div>
+      <h3 class="font-semibold text-gray-900">${u.title}</h3>
+      <p class="text-sm text-gray-600 mt-0.5 line-clamp-2">${u.body}</p>
+    </div>
+    <div class="flex gap-2 shrink-0">
+      <button onclick="togglePin('${u.id}',${u.isPinned})" class="text-xs px-2 py-1 rounded border ${u.isPinned?'border-orange-400 text-orange-600':'border-gray-200 text-gray-500'}">${u.isPinned?'Unpin':'Pin'}</button>
+      <button onclick="openUpdateModal(${JSON.stringify(u).split('"').join("'")})" class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-50">Edit</button>
+      <button onclick="deleteItem('updates','${u.id}')" class="text-xs px-2 py-1 rounded border border-red-200 text-red-500 hover:bg-red-50">Delete</button>
+    </div>
+  </div>`;
+
+async function togglePin(id, cur) {
+  await setDoc('updates',id,{isPinned:!cur}); toast(!cur?'Pinned':'Unpinned'); await loadPage('updates'); renderUpdates();
+}
+
+function openUpdateModal(u) {
+  const isEdit = !!u;
+  $('modalContainer').innerHTML = modal(isEdit?'Edit Update':'New Update', `
+    <div class="space-y-4">
+      <div>
+        <label class="label">Title *</label>
+        <input id="mTitle" value="${u?.title||''}" placeholder="e.g. Aarti timing update" class="input"/>
+      </div>
+      <div>
+        <label class="label">Body *</label>
+        <textarea id="mBody" rows="4" placeholder="Full announcement text…" class="input resize-none">${u?.body||''}</textarea>
+      </div>
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <label class="label">Tag</label>
+          <select id="mTag" class="input">
+            ${['puja','event','notice','traffic','emergency'].map(t=>`<option value="${t}" ${u?.tag===t?'selected':''}>${capitalize(t)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="flex items-end pb-1">
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" id="mPin" ${u?.isPinned?'checked':''} class="w-4 h-4 accent-orange-600"/>
+            Pin to top
+          </label>
+        </div>
+      </div>
+    </div>`,
+    `saveUpdate('${u?.id||''}')`, isEdit?'Save Changes':'Post Update');
+}
+
+async function saveUpdate(id) {
+  const title = $('mTitle').value.trim(), body = $('mBody').value.trim();
+  const tag   = $('mTag').value, isPinned = $('mPin').checked;
+  if (!title||!body) { toast('Title and body required',false); return; }
+  try {
+    if (id) { await setDoc('updates',id,{title,body,tag,isPinned}); toast('Update saved'); }
+    else     { await addDoc('updates',{title,body,tag,isPinned,timestamp:Date.now()}); toast('Update posted!'); }
+    closeModal(); await loadPage('updates'); renderUpdates();
+  } catch(e) { toast(e.message,false); }
+}
+
+// ─── Schedule ─────────────────────────────────────────────────────────────────
+function renderSchedule() {
+  const list = state.data.list || [];
+  $('mainContent').innerHTML = `
+  <div>
+    <div class="flex items-center justify-between mb-6">
+      <div><h2 class="text-2xl font-bold text-gray-900">Schedule</h2><p class="text-sm text-gray-500">10-day Ganeshotsav timetable</p></div>
+      <button onclick="openScheduleModal(null)" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">+ Add Day</button>
+    </div>
+    ${list.length===0?emptyState('No schedule yet.'):
+      `<div class="space-y-3">${list.map(d=>scheduleCard(d)).join('')}</div>`}
+  </div>`;
+}
+const scheduleCard = d => `
+  <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-4">
+    <div class="bg-orange-100 text-orange-800 font-bold text-sm rounded-lg px-3 py-2 text-center min-w-[60px]">
+      <div class="text-lg leading-none">${d.dayNumber}</div>
+      <div class="text-xs font-normal">${d.date}</div>
+    </div>
+    <div class="flex-1">
+      <p class="font-semibold text-gray-900">${d.dayName}</p>
+      <p class="text-sm text-gray-500 mt-0.5">${(d.events||[]).map(e=>`${e.time} — ${e.name}`).join(' · ')}</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="openScheduleModal(${safeJson(d)})" class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600">Edit</button>
+      <button onclick="deleteItem('schedule','${d.id}')" class="text-xs px-2 py-1 rounded border border-red-200 text-red-500">Delete</button>
+    </div>
+  </div>`;
+
+function openScheduleModal(d) {
+  const events = d?.events?.length ? d.events : [{time:'',name:'',notes:''}];
+  $('modalContainer').innerHTML = modal(d?'Edit Day':'Add Day', `
+    <div class="space-y-4">
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="label">Day #</label><input id="sDayNum" type="number" min="1" max="10" value="${d?.dayNumber||1}" class="input"/></div>
+        <div class="col-span-2"><label class="label">Date (e.g. 22 Aug)</label><input id="sDate" value="${d?.date||''}" placeholder="22 Aug" class="input"/></div>
+      </div>
+      <div><label class="label">Day Name</label><input id="sDayName" value="${d?.dayName||''}" placeholder="Day 1 — Ganesh Sthapana" class="input"/></div>
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="label" style="margin:0">Events</label>
+          <button onclick="addEventRow()" class="text-xs text-orange-600 font-medium">+ Add event</button>
+        </div>
+        <div id="eventsContainer" class="space-y-2">
+          ${events.map((e,i)=>eventRow(i,e.time,e.name,e.notes||'')).join('')}
+        </div>
+      </div>
+    </div>`, `saveSchedule('${d?.id||''}')`, d?'Save':'Add Day');
+}
+const eventRow = (i,time='',name='',notes='') => `
+  <div id="erow${i}" class="flex gap-2 items-center">
+    <input class="w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="7:00 AM" value="${time}" data-field="time" data-row="${i}"/>
+    <input class="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Event name" value="${name}" data-field="name" data-row="${i}"/>
+    <input class="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Notes" value="${notes}" data-field="notes" data-row="${i}"/>
+    <button onclick="this.closest('[id]').remove()" class="text-red-400 text-lg leading-none">×</button>
+  </div>`;
+let _eRowCount = 3;
+function addEventRow() {
+  $('eventsContainer').insertAdjacentHTML('beforeend', eventRow(_eRowCount++));
+}
+async function saveSchedule(id) {
+  const dayNumber = +$('sDayNum').value, date = $('sDate').value.trim(), dayName = $('sDayName').value.trim();
+  if (!dayName||!date) { toast('Day name and date required',false); return; }
+  const rows = document.querySelectorAll('#eventsContainer > div');
+  const events = Array.from(rows).map(r => ({
+    time:  r.querySelector('[data-field=time]').value.trim(),
+    name:  r.querySelector('[data-field=name]').value.trim(),
+    notes: r.querySelector('[data-field=notes]').value.trim()
+  })).filter(e=>e.name);
+  try {
+    if (id) { await setDoc('schedule',id,{dayNumber,date,dayName,events}); toast('Schedule updated'); }
+    else     { await addDoc('schedule',{dayNumber,date,dayName,events}); toast('Day added'); }
+    closeModal(); await loadPage('schedule'); renderSchedule();
+  } catch(e) { toast(e.message,false); }
+}
+
+// ─── Aarti ────────────────────────────────────────────────────────────────────
+function renderAarti() {
+  const list = state.data.list || [];
+  $('mainContent').innerHTML = `
+  <div>
+    <div class="flex items-center justify-between mb-6">
+      <div><h2 class="text-2xl font-bold text-gray-900">Aarti</h2><p class="text-sm text-gray-500">Manage Marathi aarti lyrics</p></div>
+      <button onclick="openAartiModal(null)" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">+ Add Aarti</button>
+    </div>
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5 text-sm text-blue-700">
+      💡 <strong>Tip:</strong> Compose Devanagari lyrics in Google Docs with Marathi keyboard, then paste here.
+    </div>
+    ${list.length===0?emptyState('No aartis yet.'):
+      `<div class="space-y-2">${list.map(a=>aartiCard(a)).join('')}</div>`}
+  </div>`;
+}
+const aartiCard = a => `
+  <div class="bg-white rounded-xl border ${!a.isActive?'opacity-50':'border-gray-200'} p-4 flex items-center gap-3">
+    <div class="flex flex-col gap-0.5 items-center">
+      <button onclick="moveAarti('${a.id}',${a.order},-1)" class="text-gray-400 hover:text-gray-700 text-xs">▲</button>
+      <span class="text-xs text-gray-400">${a.order}</span>
+      <button onclick="moveAarti('${a.id}',${a.order},1)" class="text-gray-400 hover:text-gray-700 text-xs">▼</button>
+    </div>
+    <div class="text-xl">🙏</div>
+    <div class="flex-1 min-w-0">
+      <p class="font-semibold text-gray-900">${a.name}</p>
+      <p class="text-xs text-gray-400 truncate">${(a.lyrics||'').split('\n')[0]}</p>
+    </div>
+    <div class="flex gap-2 items-center shrink-0">
+      <button onclick="toggleAarti('${a.id}',${a.isActive})"
+        class="text-xs px-2 py-1 rounded border ${a.isActive?'border-green-300 text-green-700 bg-green-50':'border-gray-200 text-gray-500'}">
+        ${a.isActive?'Visible':'Hidden'}</button>
+      <button onclick="openAartiModal(${safeJson(a)})" class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600">Edit</button>
+      <button onclick="deleteItem('aartis','${a.id}')" class="text-xs px-2 py-1 rounded border border-red-200 text-red-500">Delete</button>
+    </div>
+  </div>`;
+
+async function moveAarti(id, order, dir) {
+  await setDoc('aartis',id,{order:order+dir}); await loadPage('aarti'); renderAarti();
+}
+async function toggleAarti(id, cur) {
+  await setDoc('aartis',id,{isActive:!cur}); toast(!cur?'Visible in app':'Hidden from app'); await loadPage('aarti'); renderAarti();
+}
+function openAartiModal(a) {
+  $('modalContainer').innerHTML = modal(a?'Edit Aarti':'Add Aarti', `
+    <div class="space-y-4">
+      <div>
+        <label class="label">Aarti Name (Devanagari) *</label>
+        <input id="aName" value="${a?.name||''}" placeholder="सुखकर्ता दुखहर्ता" class="input text-base"/>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">Display Order</label><input id="aOrder" type="number" value="${a?.order||99}" class="input"/></div>
+        <div class="flex items-end pb-1">
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" id="aActive" ${a?.isActive!==false?'checked':''} class="w-4 h-4 accent-orange-600"/>
+            Active (visible in app)
+          </label>
+        </div>
+      </div>
+      <div>
+        <label class="label">Lyrics (Devanagari) *</label>
+        <p class="text-xs text-gray-400 mb-1">Paste Marathi text directly. Use Enter for new lines.</p>
+        <textarea id="aLyrics" rows="10" placeholder="सुखकर्ता दुखहर्ता वार्ता विघ्नाची ।" class="input resize-y text-base leading-relaxed">${a?.lyrics||''}</textarea>
+      </div>
+    </div>`, `saveAarti('${a?.id||''}')`, a?'Save Changes':'Add Aarti');
+}
+async function saveAarti(id) {
+  const name = $('aName').value.trim(), lyrics = $('aLyrics').value.trim();
+  const order = +$('aOrder').value, isActive = $('aActive').checked;
+  if (!name||!lyrics) { toast('Name and lyrics required',false); return; }
+  try {
+    if (id) { await setDoc('aartis',id,{name,lyrics,order,isActive}); toast('Aarti updated'); }
+    else     { await addDoc('aartis',{name,lyrics,order,isActive}); toast('Aarti added'); }
+    closeModal(); await loadPage('aarti'); renderAarti();
+  } catch(e) { toast(e.message,false); }
+}
+
+// ─── Feedback ─────────────────────────────────────────────────────────────────
+function renderFeedback() {
+  const list = state.data.list || [];
+  const unread = list.filter(f=>!f.isRead).length;
+  $('mainContent').innerHTML = `
+  <div>
+    <div class="flex items-center justify-between mb-6">
+      <div><h2 class="text-2xl font-bold text-gray-900">Feedback</h2><p class="text-sm text-gray-500">Resident submissions — read only</p></div>
+      ${unread>0?`<span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1.5 rounded-full">${unread} unread</span>`:''}
+    </div>
+    ${list.length===0?emptyState('No feedback yet.'):
+      `<div class="space-y-3">${list.map(f=>feedbackCard(f)).join('')}</div>`}
+  </div>`;
+}
+const feedbackCard = f => `
+  <div class="bg-white rounded-xl border ${!f.isRead?'border-orange-200 bg-orange-50':'border-gray-200'} p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex-1">
+        <div class="flex items-center gap-3 mb-2 flex-wrap">
+          <span class="font-semibold text-sm text-gray-900">${f.isAnonymous?'🕵️ Anonymous':'👤 '+f.name}</span>
+          ${!f.isAnonymous&&f.phone?`<span class="text-xs text-gray-500">📱 ${f.phone}</span>`:''}
+          ${f.rating>0?`<span class="text-yellow-400 text-sm">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</span>`:''}
+          <span class="text-xs text-gray-400">${fmt(f.timestamp)}</span>
+          ${!f.isRead?'<span class="text-xs bg-orange-600 text-white px-2 py-0.5 rounded-full font-bold">NEW</span>':''}
+        </div>
+        <p class="text-sm text-gray-700 leading-relaxed">${f.feedback}</p>
+      </div>
+      ${!f.isRead?`<button onclick="markFbRead('${f.id}')" class="text-xs text-orange-600 border border-orange-300 hover:bg-orange-50 px-2 py-1 rounded shrink-0">Mark read</button>`:''}
+    </div>
+  </div>`;
+async function markFbRead(id) {
+  await setDoc('feedback',id,{isRead:true}); toast('Marked as read'); await loadPage('feedback'); renderFeedback();
+}
+
+// ─── Gallery ──────────────────────────────────────────────────────────────────
+function renderGallery() {
+  const albums = state.albums || [];
+  const active = state.activeAlbum;
+  $('mainContent').innerHTML = `
+  <div>
+    <div class="flex items-center justify-between mb-6">
+      <div><h2 class="text-2xl font-bold text-gray-900">Gallery</h2><p class="text-sm text-gray-500">Year-wise photo albums</p></div>
+      <button onclick="openNewAlbumModal()" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">+ New Album</button>
+    </div>
+    <div class="flex gap-5">
+      <div class="w-56 shrink-0 space-y-2">
+        ${albums.length===0?'<p class="text-sm text-gray-400 text-center py-8">No albums</p>':
+          albums.map(a=>`
+          <div onclick="selectAlbum('${a.id}')" class="cursor-pointer rounded-xl border p-3 transition-colors ${active?.id===a.id?'border-orange-400 bg-orange-50':'bg-white border-gray-200 hover:border-orange-200'}">
+            ${a.coverUrl?`<img src="${a.coverUrl}" class="w-full h-24 object-cover rounded-lg mb-2"/>`
+              :'<div class="w-full h-24 bg-gray-100 rounded-lg mb-2 flex items-center justify-center text-3xl">🖼️</div>'}
+            <p class="font-semibold text-sm text-gray-900 truncate">${a.name}</p>
+            <p class="text-xs text-gray-400">${a.year} · ${(a.photos||[]).length} photos</p>
+            <button onclick="event.stopPropagation();deleteAlbumConfirm('${a.id}')" class="mt-1 text-xs text-red-400 hover:text-red-600">Delete album</button>
+          </div>`).join('')}
+      </div>
+      <div class="flex-1" id="photoGrid">
+        ${active?photoGridHtml():emptyState('Select an album to manage photos')}
+      </div>
+    </div>
+  </div>
+  <div id="modalContainer"></div>`;
+}
+function photoGridHtml() {
+  const a = state.activeAlbum;
+  const photos = a?.photos||[];
+  return `
+  <div>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-gray-900">${a.name}</h3>
+      <div class="flex gap-2 items-center">
+        <span id="uploadStatus" class="text-xs text-orange-600 hidden">Uploading…</span>
+        <button onclick="$('photoUpload').click()" class="text-sm bg-white border border-gray-300 hover:border-orange-400 px-3 py-1.5 rounded-lg text-gray-700 font-medium">↑ Upload photos</button>
+        <input id="photoUpload" type="file" multiple accept="image/*" class="hidden" onchange="handlePhotoUpload(this.files)"/>
+      </div>
+    </div>
+    ${photos.length===0?`<div onclick="$('photoUpload').click()" class="bg-white rounded-xl border-2 border-dashed border-gray-200 hover:border-orange-300 h-48 flex flex-col items-center justify-center text-gray-400 gap-2 text-sm cursor-pointer">
+        <span class="text-3xl">📸</span>Click to upload photos</div>`:
+      `<div class="grid grid-cols-3 gap-3">
+        ${photos.map((p,i)=>`
+        <div class="group relative rounded-xl overflow-hidden border border-gray-200 aspect-square">
+          <img src="${p.url}" class="w-full h-full object-cover"/>
+          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+            <button onclick="deletePhoto('${p.storagePath.replace(/'/g,"\\'")}',${i})" class="opacity-0 group-hover:opacity-100 bg-red-600 text-white text-xs px-2 py-1 rounded">Delete</button>
+          </div>
+        </div>`).join('')}
+        <div onclick="$('photoUpload').click()" class="rounded-xl border-2 border-dashed border-gray-200 hover:border-orange-300 aspect-square flex items-center justify-center cursor-pointer text-gray-400 text-2xl">+</div>
+      </div>`}
+  </div>`;
+}
+function selectAlbum(id) {
+  state.activeAlbum = state.albums.find(a=>a.id===id)||null;
+  renderGallery();
+}
+function openNewAlbumModal() {
+  const yr = new Date().getFullYear();
+  $('modalContainer').innerHTML = modal('Create Album',`
+    <div class="space-y-3">
+      <div><label class="label">Year</label><input id="gYear" type="number" value="${yr}" class="input"/></div>
+      <div><label class="label">Album Name</label><input id="gName" placeholder="Ganeshotsav ${yr}" class="input"/></div>
+    </div>`, 'createAlbum()', 'Create');
+}
+async function createAlbum() {
+  const year=+$('gYear').value, name=$('gName').value.trim();
+  if(!name){toast('Album name required',false);return;}
+  await addDoc('gallery',{year,name,photos:[],coverUrl:''});
+  toast('Album created'); closeModal();
+  const snap=await col('gallery').orderBy('year','desc').get();
+  state.albums=snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderGallery();
+}
+async function deleteAlbumConfirm(id) {
+  if(!confirm('Delete album and all its photos?'))return;
+  await delDoc('gallery',id);
+  if(state.activeAlbum?.id===id)state.activeAlbum=null;
+  state.albums=state.albums.filter(a=>a.id!==id);
+  toast('Album deleted'); renderGallery();
+}
+async function handlePhotoUpload(files) {
+  if(!files||!state.activeAlbum?.id)return;
+  const status=$('uploadStatus'); if(status)status.classList.remove('hidden');
+  const newPhotos=[];
+  try {
+    for(const f of Array.from(files)){
+      const path=`gallery/${state.activeAlbum.id}/${Date.now()}_${f.name}`;
+      const ref=storage.ref(path);
+      await ref.put(f);
+      const url=await ref.getDownloadURL();
+      newPhotos.push({url,storagePath:path,timestamp:Date.now()});
+    }
+    const photos=[...(state.activeAlbum.photos||[]),...newPhotos];
+    await setDoc('gallery',state.activeAlbum.id,{photos,coverUrl:photos[0]?.url||''});
+    state.activeAlbum={...state.activeAlbum,photos,coverUrl:photos[0]?.url||''};
+    state.albums=state.albums.map(a=>a.id===state.activeAlbum.id?state.activeAlbum:a);
+    toast(`${newPhotos.length} photo(s) uploaded`);
+  } catch(e){toast('Upload failed: '+e.message,false);}
+  finally{ $('photoGrid').innerHTML=photoGridHtml(); }
+}
+async function deletePhoto(storagePath,idx) {
+  if(!confirm('Delete this photo?'))return;
+  try{ await storage.ref(storagePath).delete(); }catch(e){}
+  const photos=(state.activeAlbum.photos||[]).filter((_,i)=>i!==idx);
+  await setDoc('gallery',state.activeAlbum.id,{photos,coverUrl:photos[0]?.url||''});
+  state.activeAlbum={...state.activeAlbum,photos};
+  state.albums=state.albums.map(a=>a.id===state.activeAlbum.id?state.activeAlbum:a);
+  toast('Photo deleted'); $('photoGrid').innerHTML=photoGridHtml();
+}
+
+// ─── Shared helpers ───────────────────────────────────────────────────────────
+function emptyState(msg) {
+  return `<div class="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center text-gray-400">${msg}</div>`;
+}
+
+function modal(title, body, saveFn, saveLbl='Save') {
+  return `
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+      <div class="px-6 py-4 border-b flex items-center justify-between shrink-0">
+        <h3 class="font-bold text-gray-900">${title}</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">${body}</div>
+      <div class="px-6 py-4 border-t flex justify-end gap-3 shrink-0">
+        <button onclick="closeModal()" class="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+        <button onclick="${saveFn}" class="px-4 py-2 text-sm bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg">${saveLbl}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function closeModal() {
+  const c=$('modalContainer'); if(c) c.innerHTML='';
+}
+
+async function deleteItem(collection, id) {
+  if(!confirm('Delete this item permanently?')) return;
+  await delDoc(collection, id);
+  toast('Deleted');
+  await loadPage(state.page);
+  renderCurrentPage();
+}
+
+function renderCurrentPage() {
+  if (state.loading) return;
+  const map = { dashboard:renderDashboard, updates:renderUpdates, schedule:renderSchedule,
+                aarti:renderAarti, feedback:renderFeedback, gallery:renderGallery };
+  map[state.page]?.();
+}
+
+const capitalize = s => s ? s.charAt(0).toUpperCase()+s.slice(1) : '';
+const safeJson = o => JSON.stringify(o).replace(/'/g,"\\'").replace(/"/g,"'");
+
+/* Tailwind shorthand classes injected via style tag */
+document.head.insertAdjacentHTML('beforeend',`<style>
+  .label{display:block;font-size:.875rem;font-weight:500;color:#374151;margin-bottom:.25rem}
+  .input{width:100%;border:1px solid #D1D5DB;border-radius:.5rem;padding:.5rem .75rem;font-size:.875rem;outline:none;transition:box-shadow .15s}
+  .input:focus{box-shadow:0 0 0 2px #f97316}
+</style>`);
+
+// Boot: auth state handled above
+</script>
+</body>
+</html>
