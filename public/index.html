@@ -182,19 +182,35 @@ input:focus,textarea:focus,select:focus{outline:none;box-shadow:0 0 0 2px #fb923
 <script src="/vendor/firebase-storage.js"></script>
 
 <script>
-// ─── Firebase config ──────────────────────────────────────────────────────────
-const firebaseConfig = {
-  apiKey:            'AIzaSyAvhjTvs-Edpuk4Fwu2gj1r5BZY5owF8O4',
-  authDomain:        'bal-gopal-mitra-mandal.firebaseapp.com',
-  projectId:         'bal-gopal-mitra-mandal',
-  storageBucket:     'bal-gopal-mitra-mandal.firebasestorage.app',
-  messagingSenderId: '204903030798',
-  appId:             '1:204903030798:web:d6e58695643156ba3bdc5f'   // ← Firebase console → Project Settings → Web App → appId
+// ── Show any JS error directly on the login form ──────────────────────────────
+window.onerror = function(msg, src, line) {
+  var e = document.getElementById('loginError');
+  if (e) { e.textContent = '⚠ JS Error (line '+line+'): '+msg; e.style.display='block'; }
 };
-firebase.initializeApp(firebaseConfig);
-const auth    = firebase.auth();
-const db      = firebase.firestore();
-const storage = firebase.storage();
+
+// ── Firebase init wrapped in try-catch so errors don't kill the whole script ──
+var auth, db, storage;
+(function initFirebase() {
+  try {
+    if (typeof firebase === 'undefined') throw new Error('Firebase SDK not loaded — check vendor scripts');
+    var cfg = {
+      apiKey:            'AIzaSyAvhjTvs-Edpuk4Fwu2gj1r5BZY5owF8O4',
+      authDomain:        'bal-gopal-mitra-mandal.firebaseapp.com',
+      projectId:         'bal-gopal-mitra-mandal',
+      storageBucket:     'bal-gopal-mitra-mandal.firebasestorage.app',
+      messagingSenderId: '204903030798',
+      appId:             '1:204903030798:web:d6e58695643156ba3bdc5f'
+    };
+    var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(cfg);
+    auth    = firebase.auth(app);
+    db      = firebase.firestore(app);
+    storage = firebase.storage(app);
+  } catch(err) {
+    var e = document.getElementById('loginError');
+    if (e) { e.textContent = '⚠ Firebase init failed: ' + err.message; e.style.display='block'; }
+    console.error('Firebase init error:', err);
+  }
+})();
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let state = {
@@ -235,33 +251,39 @@ auth.onAuthStateChanged(user => {
 });
 
 // Called by the static HTML form's onsubmit="doLogin(event)"
-async function doLogin(e) {
+function doLogin(e) {
   e.preventDefault();
-  const email = document.getElementById('loginEmail').value.trim();
-  const pw    = document.getElementById('loginPw').value;
-  await login(email, pw);
+  var email = document.getElementById('loginEmail').value.trim();
+  var pw    = document.getElementById('loginPw').value;
+  login(email, pw);
+  return false;
 }
 
 async function login(email, pw) {
-  const errEl = document.getElementById('loginError');
-  const btn   = document.getElementById('loginBtn');
-  if (btn) { btn.textContent = 'Signing in…'; btn.disabled = true; }
+  var errEl = document.getElementById('loginError');
+  var btn   = document.getElementById('loginBtn');
   if (errEl) errEl.style.display = 'none';
+  if (!auth) {
+    if (errEl) { errEl.textContent = '⚠ Firebase not initialized. See error above.'; errEl.style.display='block'; }
+    return;
+  }
+  if (btn) { btn.textContent = 'Signing in…'; btn.disabled = true; }
   try {
     await auth.signInWithEmailAndPassword(email, pw);
-    if (btn) btn.textContent = 'Sign In';
+    if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
   } catch(e) {
-    const msg = e.code === 'auth/invalid-credential'  ? 'Invalid email or password.'  :
-                e.code === 'auth/user-not-found'       ? 'No account with this email.' :
-                e.code === 'auth/wrong-password'       ? 'Wrong password.'             :
-                e.code === 'auth/invalid-email'        ? 'Invalid email address.'      :
-                e.code === 'auth/too-many-requests'    ? 'Too many attempts. Try later.':
-                (e.message || 'Login failed. Check console.');
+    var msg = e.code === 'auth/invalid-credential'  ? 'Invalid email or password.'   :
+              e.code === 'auth/user-not-found'       ? 'No account with this email.'  :
+              e.code === 'auth/wrong-password'       ? 'Incorrect password.'          :
+              e.code === 'auth/invalid-email'        ? 'Invalid email address.'       :
+              e.code === 'auth/too-many-requests'    ? 'Too many attempts. Try later.':
+              e.code === 'auth/network-request-failed' ? 'Network error. Check connection.' :
+              (e.message || 'Login failed: ' + e.code);
     if (errEl) { errEl.textContent = '⚠ ' + msg; errEl.style.display = 'block'; }
     if (btn)   { btn.textContent = 'Sign In'; btn.disabled = false; }
   }
 }
-async function logout() { await auth.signOut(); render('login'); }
+async function logout() { if (auth) await auth.signOut(); render('login'); }
 
 // ─── Firestore helpers ────────────────────────────────────────────────────────
 const col = name => db.collection(name);
