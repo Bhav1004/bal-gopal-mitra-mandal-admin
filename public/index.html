@@ -153,7 +153,7 @@ input:focus,textarea:focus,select:focus{outline:none;box-shadow:0 0 0 2px #fb923
         <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0">Bal Gopal Mitra Mandal</h1>
         <p style="font-size:13px;color:#6b7280;margin:4px 0 0">Admin Panel &middot; Sign In</p>
       </div>
-      <form id="loginForm">
+      <form id="loginForm" onsubmit="doLogin(event)">
         <div style="margin-bottom:16px">
           <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:4px">Email address</label>
           <input id="loginEmail" type="email" required placeholder="admin@mandal.com" autocomplete="email"
@@ -169,7 +169,7 @@ input:focus,textarea:focus,select:focus{outline:none;box-shadow:0 0 0 2px #fb923
           Sign In
         </button>
       </form>
-      <p id="loginError" style="color:#dc2626;font-size:13px;text-align:center;margin-top:12px;display:none"></p>
+      <p id="loginError" style="color:#dc2626;font-size:13px;text-align:center;margin-top:12px;display:none;word-break:break-word"></p>
       <p style="text-align:center;font-size:11px;color:#9ca3af;margin-top:20px">Admin access only &middot; Ganeshotsav 2026</p>
     </div>
   </div>
@@ -234,11 +234,34 @@ auth.onAuthStateChanged(user => {
   render(user ? (state.page === 'login' ? 'dashboard' : state.page) : 'login');
 });
 
-async function login(email, pw) {
-  try { await auth.signInWithEmailAndPassword(email, pw); toast('Welcome back!'); }
-  catch(e) { toast(e.code==='auth/invalid-credential'?'Invalid email or password':e.message, false); }
+// Called by the static HTML form's onsubmit="doLogin(event)"
+async function doLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw    = document.getElementById('loginPw').value;
+  await login(email, pw);
 }
-async function logout() { await auth.signOut(); toast('Signed out'); render('login'); }
+
+async function login(email, pw) {
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('loginBtn');
+  if (btn) { btn.textContent = 'Signing in…'; btn.disabled = true; }
+  if (errEl) errEl.style.display = 'none';
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+    if (btn) btn.textContent = 'Sign In';
+  } catch(e) {
+    const msg = e.code === 'auth/invalid-credential'  ? 'Invalid email or password.'  :
+                e.code === 'auth/user-not-found'       ? 'No account with this email.' :
+                e.code === 'auth/wrong-password'       ? 'Wrong password.'             :
+                e.code === 'auth/invalid-email'        ? 'Invalid email address.'      :
+                e.code === 'auth/too-many-requests'    ? 'Too many attempts. Try later.':
+                (e.message || 'Login failed. Check console.');
+    if (errEl) { errEl.textContent = '⚠ ' + msg; errEl.style.display = 'block'; }
+    if (btn)   { btn.textContent = 'Sign In'; btn.disabled = false; }
+  }
+}
+async function logout() { await auth.signOut(); render('login'); }
 
 // ─── Firestore helpers ────────────────────────────────────────────────────────
 const col = name => db.collection(name);
