@@ -195,7 +195,6 @@ window.doLogin = function(e) {
 <script src="/vendor/firebase-auth.js"></script>
 <script src="/vendor/firebase-firestore.js"></script>
 <script src="/vendor/firebase-storage.js"></script>
-<script src="/vendor/firebase-functions.js"></script>
 
 <!-- ── Step 3: Main app — runs after Firebase is available ──────────────── -->
 <script>
@@ -203,7 +202,7 @@ window.doLogin = function(e) {
 'use strict';
 
 // ── Firebase init ─────────────────────────────────────────────────────────────
-var auth, db, storage, functions;
+var auth, db, storage;
 try {
   if (typeof firebase === 'undefined') throw new Error('firebase global not defined');
   var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp({
@@ -214,11 +213,10 @@ try {
     messagingSenderId: '204903030798',
     appId:             '1:204903030798:web:d6e58695643156ba3bdc5f'
   });
-  auth      = firebase.auth(app);
-  db        = firebase.firestore(app);
-  storage   = firebase.storage(app);
-  functions = firebase.functions(app);
-  window._fbAuth = auth;  // expose to doLogin()
+  auth    = firebase.auth(app);
+  db      = firebase.firestore(app);
+  storage = firebase.storage(app);
+  window._fbAuth = auth;
 } catch(err) {
   var e = document.getElementById('loginError');
   if (e) { e.textContent = 'Firebase failed to initialize: ' + err.message; e.style.display = 'block'; }
@@ -826,6 +824,8 @@ function renderNotifications() {
   );
 }
 
+var WORKER_URL = 'https://frosty-salad-a110.bhavin-others.workers.dev';
+
 function sendNotif() {
   var title  = $('nTitle') ? $('nTitle').value.trim() : '';
   var body   = $('nBody')  ? $('nBody').value.trim()  : '';
@@ -833,31 +833,74 @@ function sendNotif() {
   var btn    = $('sendBtn');
 
   if (!title || !body) { toast('Title and body required', false); return; }
-  if (!functions) { toast('Firebase Functions not loaded', false); return; }
-
   if (btn) { btn.textContent = 'Sending\u2026'; btn.disabled = true; }
-  if (status) { status.style.display = 'none'; }
+  if (status) status.style.display = 'none';
 
-  var sendFn = functions.httpsCallable('sendNotification');
-  sendFn({ title: title, body: body })
-    .then(function(result) {
-      var r = result.data;
+  // 1. Read all device tokens from Firestore
+  col('device_tokens').get().then(function(snap) {
+    var tokens = snap.docs.map(function(d) { return d.data().token; }).filter(Boolean);
+
+    if (tokens.length === 0) {
       if (btn) { btn.textContent = 'Send to All Devices'; btn.disabled = false; }
       if (status) {
-        status.textContent = '\u2705 Sent! ' + r.successCount + ' delivered, ' + r.failureCount + ' failed out of ' + r.totalDevices + ' devices.';
-        status.style.cssText = 'display:block;color:#16a34a;font-weight:500';
+        status.textContent = '\u26A0\uFE0F No registered devices found. Install the app on a phone first.';
+        status.style.cssText = 'display:block;color:#d97706';
       }
+      return Promise.reject('no-tokens');
+    }
+
+    if (status) {
+      status.textContent = 'Sending to ' + tokens.length + ' device(s)\u2026';
+      status.style.cssText = 'display:block;color:#6b7280';
+    }
+
+    // 2. Worker takes one token per request — send all in parallel
+    var requests = tokens.map(function(token) {
+      return fetch(WORKER_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ token: token, title: title, body: body })
+      }).then(function(res) { return res.json(); })
+        .then(function(json) {
+          // FCM v1 success returns { name: "projects/.../messages/..." }
+          return json.name ? 'ok' : 'fail';
+        })
+        .catch(function() { return 'fail'; });
+    });
+
+    return Promise.all(requests).then(function(results) {
+      var ok   = results.filter(function(r) { return r === 'ok'; }).length;
+      var fail = results.filter(function(r) { return r === 'fail'; }).length;
+
+      if (btn) { btn.textContent = 'Send to All Devices'; btn.disabled = false; }
+      if (status) {
+        status.textContent = '\u2705 Done! ' + ok + ' delivered' + (fail ? ', ' + fail + ' failed' : '') + ' out of ' + tokens.length + ' device(s).';
+        status.style.cssText = 'display:block;color:' + (fail === tokens.length ? '#dc2626' : '#16a34a') + ';font-weight:500';
+      }
+
+      // 3. Log to Firestore history
+      addFsDoc('notification_history', {
+        title: title, body: body,
+        sentAt:       new Date(),
+        sentBy:       state.user ? state.user.email : 'admin',
+        successCount: ok,
+        failureCount: fail,
+        totalDevices: tokens.length
+      });
+
       if ($('nTitle')) $('nTitle').value = '';
       if ($('nBody'))  $('nBody').value  = '';
-      loadAndRender('notifications');
-    })
-    .catch(function(err) {
-      if (btn) { btn.textContent = 'Send to All Devices'; btn.disabled = false; }
-      if (status) {
-        status.textContent = '\u26A0\uFE0F ' + (err.message || err.code || 'Send failed');
-        status.style.cssText = 'display:block;color:#dc2626';
-      }
+      setTimeout(function() { loadAndRender('notifications'); }, 1500);
     });
+
+  }).catch(function(err) {
+    if (err === 'no-tokens') return;
+    if (btn) { btn.textContent = 'Send to All Devices'; btn.disabled = false; }
+    if (status) {
+      status.textContent = '\u26A0\uFE0F Error: ' + (err.message || err);
+      status.style.cssText = 'display:block;color:#dc2626';
+    }
+  });
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
