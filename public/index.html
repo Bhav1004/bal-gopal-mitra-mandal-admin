@@ -73,6 +73,10 @@ const TAG_COLORS = {
 };
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
+// Render login immediately — don't wait for auth callback (blocked corporate proxies
+// may delay or prevent onAuthStateChanged from firing, causing a blank page).
+renderLogin();
+
 auth.onAuthStateChanged(user => {
   state.user = user;
   render(user ? (state.page === 'login' ? 'dashboard' : state.page) : 'login');
