@@ -3,7 +3,8 @@ name: Deploy Admin Panel to Firebase Hosting
 on:
   push:
     branches:
-      - main          # deploy on every push to main
+      - main
+      - master        # deploy on push to either main or master
   workflow_dispatch:  # allow manual trigger from GitHub Actions tab
 
 jobs:
