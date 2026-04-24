@@ -5,854 +5,804 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Bal Gopal Mitra Mandal — Admin</title>
 <style>
-/* ── Reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.5;color:#111827;background:#f9fafb;-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9fafb;color:#111827;min-height:100vh}
 a{text-decoration:none;color:inherit}
-button{cursor:pointer;font-family:inherit;border:none;background:none}
-input,textarea,select{font-family:inherit;font-size:inherit}
+button{cursor:pointer;font-family:inherit;border:none}
+input,textarea,select{font-family:inherit;font-size:14px}
 textarea{resize:vertical}
+.hidden{display:none!important}
 
-/* ── Layout ── */
-.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.block{display:block}.hidden{display:none}
-.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
-.flex-1{flex:1 1 0%}.flex-none{flex:none}.shrink-0{flex-shrink:0}.grow{flex-grow:1}
-.items-center{align-items:center}.items-start{align-items:flex-start}.items-end{align-items:flex-end}.items-baseline{align-items:baseline}
-.justify-center{justify-content:center}.justify-between{justify-content:space-between}.justify-end{justify-content:flex-end}
-.gap-1{gap:4px}.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}.gap-5{gap:20px}.gap-6{gap:24px}.gap-8{gap:32px}
-.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.min-h-screen{min-height:100vh}.h-full{height:100%}.h-24{height:96px}.h-28{height:112px}.h-40{height:160px}.h-48{height:192px}.h-64{height:256px}
-.w-full{width:100%}.w-56{width:224px}.w-28{width:112px}.w-20{width:80px}.min-w-0{min-width:0}
-.max-w-sm{max-width:384px}.max-w-md{max-width:448px}.max-w-lg{max-width:512px}.max-w-xl{max-width:576px}
-.aspect-square{aspect-ratio:1/1}
-.ml-56{margin-left:224px}
-.overflow-hidden{overflow:hidden}.overflow-auto{overflow:auto}.overflow-y-auto{overflow-y:auto}
-.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.min-w-0{min-width:0}
+/* Layout */
+.flex{display:flex}.iflex{display:inline-flex}.grid{display:grid}
+.col{flex-direction:column}.wrap{flex-wrap:wrap}
+.f1{flex:1}.shrink0{flex-shrink:0}.minw0{min-width:0}
+.ac{align-items:center}.as{align-items:flex-start}.jc{justify-content:center}
+.jb{justify-content:space-between}.je{justify-content:flex-end}
+.g1{gap:4px}.g2{gap:8px}.g3{gap:12px}.g4{gap:16px}.g5{gap:20px}
+.g2c{grid-template-columns:1fr 1fr}.g3c{grid-template-columns:repeat(3,1fr)}.g4c{grid-template-columns:repeat(4,1fr)}
+.mh100{min-height:100vh}.w100{width:100%}.h100{height:100%}
+.w56{width:224px}.maxmd{max-width:448px}.maxlg{max-width:512px}
+.ml56{margin-left:224px}.oa{overflow:auto}.oh{overflow:hidden}.oya{overflow-y:auto}
+.trunc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sq{aspect-ratio:1/1}.rel{position:relative}.abs{position:absolute}
+.fix{position:fixed}.sticky{position:sticky}
+.t0{top:0}.r0{right:0}.l0{left:0}.inset{top:0;right:0;bottom:0;left:0}
+.z40{z-index:40}.z50{z-index:50}
 
-/* ── Spacing ── */
-.p-2{padding:8px}.p-3{padding:12px}.p-4{padding:16px}.p-5{padding:20px}.p-6{padding:24px}.p-8{padding:32px}.p-12{padding:48px}
-.px-2{padding-left:8px;padding-right:8px}.px-3{padding-left:12px;padding-right:12px}.px-4{padding-left:16px;padding-right:16px}
-.px-5{padding-left:20px;padding-right:20px}.px-6{padding-left:24px;padding-right:24px}
-.py-1{padding-top:4px;padding-bottom:4px}.py-1\.5{padding-top:6px;padding-bottom:6px}.py-2{padding-top:8px;padding-bottom:8px}
-.py-2\.5{padding-top:10px;padding-bottom:10px}.py-3{padding-top:12px;padding-bottom:12px}.py-4{padding-top:16px;padding-bottom:16px}
-.py-5{padding-top:20px;padding-bottom:20px}.py-6{padding-top:24px;padding-bottom:24px}.py-8{padding-top:32px;padding-bottom:32px}
-.pt-12{padding-top:48px}
-.mb-0\.5{margin-bottom:2px}.mb-1{margin-bottom:4px}.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}
-.mb-5{margin-bottom:20px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}
-.mt-1{margin-top:4px}.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mt-6{margin-top:24px}
-.mr-2{margin-right:8px}.ml-2{margin-left:8px}
-.space-y-0\.5>*+*{margin-top:2px}.space-y-2>*+*{margin-top:8px}.space-y-3>*+*{margin-top:12px}
-.space-y-4>*+*{margin-top:16px}.space-y-5>*+*{margin-top:20px}
+/* Spacing helpers - pad */
+.p3{padding:12px}.p4{padding:16px}.p5{padding:20px}.p6{padding:24px}.p8{padding:32px}.p12{padding:48px}
+.px2{padding-left:8px;padding-right:8px}.px3{padding-left:12px;padding-right:12px}
+.px4{padding-left:16px;padding-right:16px}.px6{padding-left:24px;padding-right:24px}
+.py1{padding-top:4px;padding-bottom:4px}.py15{padding-top:6px;padding-bottom:6px}
+.py2{padding-top:8px;padding-bottom:8px}.py25{padding-top:10px;padding-bottom:10px}
+.py4{padding-top:16px;padding-bottom:16px}.py5{padding-top:20px;padding-bottom:20px}
+/* margin */
+.mb1{margin-bottom:4px}.mb2{margin-bottom:8px}.mb3{margin-bottom:12px}
+.mb4{margin-bottom:16px}.mb5{margin-bottom:20px}.mb6{margin-bottom:24px}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mt3{margin-top:12px}.mt4{margin-top:16px}
+.mr2{margin-right:8px}
 
-/* ── Position ── */
-.relative{position:relative}.absolute{position:absolute}.fixed{position:fixed}.sticky{position:sticky}
-.top-0{top:0}.top-4{top:16px}.right-0{right:0}.right-4{right:16px}.left-0{left:0}.bottom-0{bottom:0}
-.inset-0{top:0;right:0;bottom:0;left:0}
-.z-40{z-index:40}.z-50{z-index:50}
+/* Typography */
+.xs{font-size:11px;line-height:16px}.sm{font-size:13px;line-height:18px}
+.base{font-size:15px}.lg{font-size:18px}.xl{font-size:20px}.xl2{font-size:24px}.xl3{font-size:30px}
+.bold{font-weight:700}.semibold{font-weight:600}.medium{font-weight:500}
+.tc{text-align:center}.tr{text-align:right}
+.lh1{line-height:1}.lh-tight{line-height:1.3}
+.clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
-/* ── Typography ── */
-.text-xs{font-size:12px;line-height:16px}.text-sm{font-size:14px;line-height:20px}.text-base{font-size:16px;line-height:24px}
-.text-lg{font-size:18px;line-height:28px}.text-xl{font-size:20px;line-height:28px}.text-2xl{font-size:24px;line-height:32px}
-.text-3xl{font-size:30px;line-height:36px}.text-5xl{font-size:48px;line-height:1}
-.font-normal{font-weight:400}.font-medium{font-weight:500}.font-semibold{font-weight:600}.font-bold{font-weight:700}
-.text-center{text-align:center}.text-right{text-align:right}.text-left{text-align:left}
-.leading-none{line-height:1}.leading-tight{line-height:1.25}.leading-relaxed{line-height:1.625}
-.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.italic{font-style:italic}
+/* Colors */
+.white{color:#fff}.g4c-t{color:#9ca3af}.g5c-t{color:#6b7280}.g6{color:#4b5563}
+.g7{color:#374151}.g8{color:#1f2937}.g9{color:#111827}
+.ora{color:#ea580c}.ora-d{color:#c2410c}
+.grn{color:#16a34a}.grn-d{color:#15803d}
+.red{color:#dc2626}.red-l{color:#f87171}.red-m{color:#ef4444}
+.blu{color:#1d4ed8}.ylw{color:#854d0e}
 
-/* ── Colors: Text ── */
-.text-white{color:#fff}.text-gray-400{color:#9ca3af}.text-gray-500{color:#6b7280}.text-gray-600{color:#4b5563}
-.text-gray-700{color:#374151}.text-gray-800{color:#1f2937}.text-gray-900{color:#111827}
-.text-orange-600{color:#ea580c}.text-orange-700{color:#c2410c}.text-orange-800{color:#9a3412}
-.text-green-600{color:#16a34a}.text-green-700{color:#15803d}.text-green-800{color:#166534}
-.text-red-400{color:#f87171}.text-red-500{color:#ef4444}.text-red-600{color:#dc2626}.text-red-700{color:#b91c1c}
-.text-blue-700{color:#1d4ed8}.text-yellow-800{color:#854d0e}.text-purple-700{color:#7e22ce}
+/* Backgrounds */
+.bg-w{background:#fff}.bg-50{background:#f9fafb}.bg-100{background:#f3f4f6}
+.bg-or50{background:#fff7ed}.bg-or100{background:#ffedd5}
+.bg-or6{background:#ea580c}.bg-or7{background:#c2410c}
+.bg-gr50{background:#f0fdf4}.bg-gr100{background:#dcfce7}.bg-gr6{background:#16a34a}
+.bg-re50{background:#fef2f2}.bg-re6{background:#dc2626}
+.bg-bl50{background:#eff6ff}.bg-bl100{background:#dbeafe}
+.bg-yl100{background:#fef9c3}
+.bg-black40{background:rgba(0,0,0,.4)}
 
-/* ── Colors: Background ── */
-.bg-white{background-color:#fff}.bg-gray-50{background-color:#f9fafb}.bg-gray-100{background-color:#f3f4f6}
-.bg-orange-50{background-color:#fff7ed}.bg-orange-100{background-color:#ffedd5}
-.bg-orange-600{background-color:#ea580c}.bg-orange-700{background-color:#c2410c}
-.bg-green-50{background-color:#f0fdf4}.bg-green-100{background-color:#dcfce7}.bg-green-600{background-color:#16a34a}
-.bg-red-50{background-color:#fef2f2}.bg-red-600{background-color:#dc2626}
-.bg-blue-50{background-color:#eff6ff}.bg-blue-100{background-color:#dbeafe}
-.bg-yellow-100{background-color:#fef9c3}.bg-purple-50{background-color:#faf5ff}
-.bg-black\/40{background-color:rgba(0,0,0,.4)}
-.bg-black\/0{background-color:rgba(0,0,0,0)}
+/* Borders */
+.b{border:1px solid}.b2{border:2px solid}.bt{border-top:1px solid}.bb{border-bottom:1px solid}.br{border-right:1px solid}
+.bc-100{border-color:#f3f4f6}.bc-200{border-color:#e5e7eb}.bc-300{border-color:#d1d5db}
+.bc-or3{border-color:#fdba74}.bc-or4{border-color:#fb923c}.bc-gr3{border-color:#86efac}
+.bc-re2{border-color:#fecaca}.bdash{border-style:dashed}
+.r4{border-radius:4px}.r8{border-radius:8px}.r12{border-radius:12px}
+.r16{border-radius:16px}.rfull{border-radius:9999px}
 
-/* ── Colors: Border ── */
-.border{border-width:1px;border-style:solid}.border-0{border-width:0}
-.border-t{border-top-width:1px;border-top-style:solid}.border-b{border-bottom-width:1px;border-bottom-style:solid}
-.border-r{border-right-width:1px;border-right-style:solid}.border-l{border-left-width:1px;border-left-style:solid}
-.border-2{border-width:2px;border-style:solid}
-.border-gray-100{border-color:#f3f4f6}.border-gray-200{border-color:#e5e7eb}.border-gray-300{border-color:#d1d5db}
-.border-orange-200{border-color:#fed7aa}.border-orange-300{border-color:#fdba74}.border-orange-400{border-color:#fb923c}
-.border-green-300{border-color:#86efac}.border-red-200{border-color:#fecaca}
-.border-dashed{border-style:dashed}
+/* Shadows */
+.sh{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.sh-lg{box-shadow:0 10px 25px rgba(0,0,0,.12)}
 
-/* ── Border Radius ── */
-.rounded{border-radius:4px}.rounded-lg{border-radius:8px}.rounded-xl{border-radius:12px}
-.rounded-2xl{border-radius:16px}.rounded-full{border-radius:9999px}
+/* Interactive */
+.ptr{cursor:pointer}.trans{transition:background 150ms,border-color 150ms,color 150ms}
+.op50{opacity:.5}
 
-/* ── Shadow ── */
-.shadow-lg{box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1)}
-.shadow-xl{box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1)}
-.elevation-4{box-shadow:0 2px 4px rgba(0,0,0,.12)}
+/* Animations */
+.pulse{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.fade{animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
 
-/* ── Interactive ── */
-.cursor-pointer{cursor:pointer}
-.transition-colors{transition-property:color,background-color,border-color;transition-duration:150ms}
-.opacity-50{opacity:.5}.opacity-60{opacity:.6}
-.disabled\:opacity-60:disabled{opacity:.6}
+/* Form elements */
+.inp{width:100%;border:1px solid #d1d5db;border-radius:8px;padding:9px 13px;font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:#ea580c;box-shadow:0 0 0 3px rgba(234,88,12,.15)}
+.lbl{display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px}
+.sel{width:100%;border:1px solid #d1d5db;border-radius:8px;padding:9px 13px;font-size:14px;outline:none;background:#fff}
 
-/* ── Hover states ── */
-.hover\:bg-gray-50:hover{background-color:#f9fafb}
-.hover\:bg-gray-100:hover{background-color:#f3f4f6}
-.hover\:bg-orange-50:hover{background-color:#fff7ed}
-.hover\:bg-orange-700:hover{background-color:#c2410c}
-.hover\:bg-red-50:hover{background-color:#fef2f2}
-.hover\:text-gray-600:hover{color:#4b5563}
-.hover\:text-gray-700:hover{color:#374151}
-.hover\:text-gray-900:hover{color:#111827}
-.hover\:text-red-600:hover{color:#dc2626}
-.hover\:text-red-700:hover{color:#b91c1c}
-.hover\:text-orange-600:hover{color:#ea580c}
-.hover\:border-orange-200:hover{border-color:#fed7aa}
-.hover\:border-orange-300:hover{border-color:#fdba74}
-.hover\:underline:hover{text-decoration:underline}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;transition:background .15s;border:none;cursor:pointer}
+.btn-primary{background:#ea580c;color:#fff}.btn-primary:hover{background:#c2410c}
+.btn-ghost{background:transparent;border:1px solid #e5e7eb;color:#374151}.btn-ghost:hover{background:#f9fafb}
+.btn-danger{background:transparent;border:1px solid #fecaca;color:#ef4444}.btn-danger:hover{background:#fef2f2}
+.btn-sm{padding:4px 10px;font-size:12px;border-radius:6px}
+.btn:disabled{opacity:.6;cursor:not-allowed}
 
-/* ── Group hover ── */
-.group:hover .group-hover\:opacity-100{opacity:1}
-.group:hover .group-hover\:bg-black\/40{background-color:rgba(0,0,0,.4)}
+/* Card */
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px}
 
-/* ── Animations ── */
-.animate-pulse{animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.fade{animation:fadeIn .2s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* Badge / chip */
+.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.badge-puja{background:#ffedd5;color:#9a3412}
+.badge-event{background:#dcfce7;color:#166534}
+.badge-notice{background:#dbeafe;color:#1e40af}
+.badge-traffic{background:#fef9c3;color:#854d0e}
+.badge-emergency{background:#fecaca;color:#991b1b}
 
-/* ── Focus ── */
-input:focus,textarea:focus,select:focus{outline:none;box-shadow:0 0 0 2px #fb923c;border-color:#fb923c}
+/* Sidebar */
+.sidebar{width:224px;min-height:100vh;background:#fff;border-right:1px solid #f3f4f6;display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:40}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;color:#4b5563;transition:background .15s;cursor:pointer;text-decoration:none}
+.nav-item:hover{background:#f9fafb;color:#111827}
+.nav-item.active{background:#fff7ed;color:#c2410c}
 
-/* ── Custom components ── */
-.chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
-.label{display:block;font-size:.875rem;font-weight:500;color:#374151;margin-bottom:.25rem}
-.input{width:100%;border:1px solid #d1d5db;border-radius:.5rem;padding:.5rem .75rem;font-size:.875rem;outline:none}
-.input:focus{box-shadow:0 0 0 2px #fb923c;border-color:#fb923c}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#fff;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.15);width:100%;max-width:520px;max-height:90vh;display:flex;flex-direction:column}
 </style>
 </head>
-<body style="background:#f9fafb;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+<body>
 
-<!-- Static login form — visible immediately, no JS required to render -->
+<!-- ── Static login — renders before any JS loads ───────────────────────── -->
 <div id="app">
-  <div style="min-height:100vh;background:#fff7ed;display:flex;align-items:center;justify-content:center;padding:16px">
-    <div style="background:#fff;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,.1);width:100%;max-width:420px;padding:32px">
+  <div style="min-height:100vh;background:#fff7ed;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.1);width:100%;max-width:400px;padding:36px">
       <div style="text-align:center;margin-bottom:28px">
-        <div style="font-size:48px;margin-bottom:8px">🙏</div>
-        <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0">Bal Gopal Mitra Mandal</h1>
-        <p style="font-size:13px;color:#6b7280;margin:4px 0 0">Admin Panel &middot; Sign In</p>
+        <div style="font-size:52px;margin-bottom:8px">🙏</div>
+        <h1 style="font-size:22px;font-weight:700;color:#111">Bal Gopal Mitra Mandal</h1>
+        <p style="font-size:13px;color:#6b7280;margin-top:4px">Admin Panel &middot; Sign In</p>
       </div>
-      <form id="loginForm" onsubmit="doLogin(event)">
-        <div style="margin-bottom:16px">
-          <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:4px">Email address</label>
-          <input id="loginEmail" type="email" required placeholder="admin@mandal.com" autocomplete="email"
-            style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 14px;font-size:14px;box-sizing:border-box;outline:none"/>
-        </div>
-        <div style="margin-bottom:20px">
-          <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:4px">Password</label>
-          <input id="loginPw" type="password" required placeholder="••••••••" autocomplete="current-password"
-            style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 14px;font-size:14px;box-sizing:border-box;outline:none"/>
-        </div>
-        <button type="submit" id="loginBtn"
+      <form id="loginForm" onsubmit="doLogin(event)" autocomplete="on">
+        <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Email address</label>
+        <input id="loginEmail" type="email" required placeholder="admin@example.com" autocomplete="email"
+          style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 13px;font-size:14px;margin-bottom:14px;box-sizing:border-box;outline:none"/>
+        <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Password</label>
+        <input id="loginPw" type="password" required placeholder="••••••••" autocomplete="current-password"
+          style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 13px;font-size:14px;margin-bottom:18px;box-sizing:border-box;outline:none"/>
+        <button id="loginBtn" type="submit"
           style="width:100%;background:#ea580c;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer">
           Sign In
         </button>
       </form>
-      <p id="loginError" style="color:#dc2626;font-size:13px;text-align:center;margin-top:12px;display:none;word-break:break-word"></p>
+      <p id="loginError" style="margin-top:14px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;display:none;word-break:break-word"></p>
       <p style="text-align:center;font-size:11px;color:#9ca3af;margin-top:20px">Admin access only &middot; Ganeshotsav 2026</p>
     </div>
   </div>
 </div>
 
-<!-- Firebase SDK loaded at bottom — does not block page rendering -->
+<!-- ── Step 1: Login handler defined BEFORE Firebase loads ───────────────── -->
+<!-- This tiny script block is standalone — zero dependencies, cannot fail   -->
+<script>
+window.doLogin = function(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  var email  = document.getElementById('loginEmail').value.trim();
+  var pw     = document.getElementById('loginPw').value;
+  var errEl  = document.getElementById('loginError');
+  var btn    = document.getElementById('loginBtn');
+  function showErr(msg) {
+    if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+    if (btn)   { btn.textContent = 'Sign In'; btn.disabled = false; }
+  }
+  if (!email || !pw) { showErr('Please enter email and password.'); return false; }
+  if (!window._fbAuth) { showErr('Firebase loading... please wait 2 seconds and try again.'); return false; }
+  if (btn) { btn.textContent = 'Signing in\u2026'; btn.disabled = true; }
+  if (errEl) errEl.style.display = 'none';
+  window._fbAuth.signInWithEmailAndPassword(email, pw)
+    .then(function() { /* onAuthStateChanged handles redirect */ })
+    .catch(function(err) {
+      var msgs = {
+        'auth/invalid-credential':    'Invalid email or password.',
+        'auth/user-not-found':        'No account found with this email.',
+        'auth/wrong-password':        'Incorrect password.',
+        'auth/invalid-email':         'Please enter a valid email.',
+        'auth/too-many-requests':     'Too many failed attempts. Try again in a few minutes.',
+        'auth/network-request-failed':'Network error. Please check your connection.'
+      };
+      showErr(msgs[err.code] || ('Error: ' + err.message + ' [' + err.code + ']'));
+    });
+  return false;
+};
+</script>
+
+<!-- ── Step 2: Firebase SDK ──────────────────────────────────────────────── -->
 <script src="/vendor/firebase-app.js"></script>
 <script src="/vendor/firebase-auth.js"></script>
 <script src="/vendor/firebase-firestore.js"></script>
 <script src="/vendor/firebase-storage.js"></script>
 
+<!-- ── Step 3: Main app — runs after Firebase is available ──────────────── -->
 <script>
-// ── Show any JS error directly on the login form ──────────────────────────────
-window.onerror = function(msg, src, line) {
-  var e = document.getElementById('loginError');
-  if (e) { e.textContent = '⚠ JS Error (line '+line+'): '+msg; e.style.display='block'; }
-};
+(function() {
+'use strict';
 
-// ── Firebase init wrapped in try-catch so errors don't kill the whole script ──
+// ── Firebase init ─────────────────────────────────────────────────────────────
 var auth, db, storage;
-(function initFirebase() {
-  try {
-    if (typeof firebase === 'undefined') throw new Error('Firebase SDK not loaded — check vendor scripts');
-    var cfg = {
-      apiKey:            'AIzaSyAvhjTvs-Edpuk4Fwu2gj1r5BZY5owF8O4',
-      authDomain:        'bal-gopal-mitra-mandal.firebaseapp.com',
-      projectId:         'bal-gopal-mitra-mandal',
-      storageBucket:     'bal-gopal-mitra-mandal.firebasestorage.app',
-      messagingSenderId: '204903030798',
-      appId:             '1:204903030798:web:d6e58695643156ba3bdc5f'
-    };
-    var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(cfg);
-    auth    = firebase.auth(app);
-    db      = firebase.firestore(app);
-    storage = firebase.storage(app);
-  } catch(err) {
-    var e = document.getElementById('loginError');
-    if (e) { e.textContent = '⚠ Firebase init failed: ' + err.message; e.style.display='block'; }
-    console.error('Firebase init error:', err);
-  }
-})();
-
-// ─── State ────────────────────────────────────────────────────────────────────
-let state = {
-  user:    null,
-  page:    'login',      // login | dashboard | updates | schedule | aarti | feedback | gallery
-  loading: false,
-  modal:   null,         // { type, data }
-  data:    {},
-  albums:  [],
-  activeAlbum: null,
-};
-
-// ─── Utilities ────────────────────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-const el = (tag, cls, html='') => { const e=document.createElement(tag); e.className=cls; e.innerHTML=html; return e; };
-const fmt = ts => ts ? new Date(ts).toLocaleDateString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-
-function toast(msg, ok=true) {
-  const t = el('div',`fixed top-4 right-4 z-[9999] px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white fade ${ok?'bg-green-600':'bg-red-600'}`, msg);
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3500);
+try {
+  if (typeof firebase === 'undefined') throw new Error('firebase global not defined');
+  var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp({
+    apiKey:            'AIzaSyAvhjTvs-Edpuk4Fwu2gj1r5BZY5owF8O4',
+    authDomain:        'bal-gopal-mitra-mandal.firebaseapp.com',
+    projectId:         'bal-gopal-mitra-mandal',
+    storageBucket:     'bal-gopal-mitra-mandal.firebasestorage.app',
+    messagingSenderId: '204903030798',
+    appId:             '1:204903030798:web:d6e58695643156ba3bdc5f'
+  });
+  auth    = firebase.auth(app);
+  db      = firebase.firestore(app);
+  storage = firebase.storage(app);
+  window._fbAuth = auth;  // expose to doLogin()
+} catch(err) {
+  var e = document.getElementById('loginError');
+  if (e) { e.textContent = 'Firebase failed to initialize: ' + err.message; e.style.display = 'block'; }
+  console.error('Firebase init error:', err);
+  return; // stop here — no point continuing
 }
 
-const TAG_COLORS = {
-  puja:'bg-orange-100 text-orange-800', event:'bg-green-100 text-green-800',
-  notice:'bg-blue-100 text-blue-800', traffic:'bg-yellow-100 text-yellow-800',
-  emergency:'bg-red-100 text-red-800'
+// ── Utilities ─────────────────────────────────────────────────────────────────
+var $ = function(id) { return document.getElementById(id); };
+var state = { user: null, page: 'login', loading: false, data: {}, albums: [], activeAlbum: null };
+
+function toast(msg, ok) {
+  ok = ok === undefined ? true : ok;
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;background:' + (ok ? '#16a34a' : '#dc2626') + ';animation:fadeIn .2s ease';
+  document.body.appendChild(t);
+  setTimeout(function() { t.remove(); }, 3500);
+}
+
+function fmt(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleDateString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+}
+
+var TAG_COLORS = {
+  puja:'badge-puja', event:'badge-event', notice:'badge-notice',
+  traffic:'badge-traffic', emergency:'badge-emergency'
 };
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-// Render login immediately — don't wait for auth callback (blocked corporate proxies
-// may delay or prevent onAuthStateChanged from firing, causing a blank page).
-renderLogin();
+function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 
-auth.onAuthStateChanged(user => {
+// ── Auth state ────────────────────────────────────────────────────────────────
+auth.onAuthStateChanged(function(user) {
   state.user = user;
-  render(user ? (state.page === 'login' ? 'dashboard' : state.page) : 'login');
+  if (user) {
+    if (state.page === 'login') render('dashboard');
+    else render(state.page);
+  } else {
+    renderLogin();
+  }
 });
 
-// Called by the static HTML form's onsubmit="doLogin(event)"
-function doLogin(e) {
-  e.preventDefault();
-  var email = document.getElementById('loginEmail').value.trim();
-  var pw    = document.getElementById('loginPw').value;
-  login(email, pw);
-  return false;
-}
+function logout() { auth.signOut(); }
 
-async function login(email, pw) {
-  var errEl = document.getElementById('loginError');
-  var btn   = document.getElementById('loginBtn');
-  if (errEl) errEl.style.display = 'none';
-  if (!auth) {
-    if (errEl) { errEl.textContent = '⚠ Firebase not initialized. See error above.'; errEl.style.display='block'; }
-    return;
-  }
-  if (btn) { btn.textContent = 'Signing in…'; btn.disabled = true; }
-  try {
-    await auth.signInWithEmailAndPassword(email, pw);
-    if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
-  } catch(e) {
-    var msg = e.code === 'auth/invalid-credential'  ? 'Invalid email or password.'   :
-              e.code === 'auth/user-not-found'       ? 'No account with this email.'  :
-              e.code === 'auth/wrong-password'       ? 'Incorrect password.'          :
-              e.code === 'auth/invalid-email'        ? 'Invalid email address.'       :
-              e.code === 'auth/too-many-requests'    ? 'Too many attempts. Try later.':
-              e.code === 'auth/network-request-failed' ? 'Network error. Check connection.' :
-              (e.message || 'Login failed: ' + e.code);
-    if (errEl) { errEl.textContent = '⚠ ' + msg; errEl.style.display = 'block'; }
-    if (btn)   { btn.textContent = 'Sign In'; btn.disabled = false; }
-  }
-}
-async function logout() { if (auth) await auth.signOut(); render('login'); }
-
-// ─── Firestore helpers ────────────────────────────────────────────────────────
-const col = name => db.collection(name);
-
-async function getAll(name, order='timestamp', dir='desc') {
-  const snap = await col(name).orderBy(order, dir).get();
-  return snap.docs.map(d => ({ id:d.id, ...d.data() }));
-}
-const addDoc  = (name,data) => col(name).add(data);
-const setDoc  = (name,id,data) => col(name).doc(id).set(data, {merge:true});
-const delDoc  = (name,id) => col(name).doc(id).delete();
-
-// ─── Page loaders ─────────────────────────────────────────────────────────────
-async function loadPage(page) {
-  state.loading = true; renderShell(page);
-  try {
-    if (page==='dashboard') {
-      const safe = p => p.catch(() => ({ size:0, docs:[] }));
-      const [u,a,f,t] = await Promise.all([
-        safe(col('updates').get()), safe(col('aartis').get()),
-        safe(col('feedback').get()), safe(col('device_tokens').get())
-      ]);
-      const unread = (f.docs||[]).filter(d=>!d.data().isRead).length;
-      state.data = { updates:u.size||0, aartis:a.size||0, feedback:f.size||0, unread, devices:t.size||0 };
-    } else if (page==='updates')  { state.data.list = await getAll('updates'); }
-    else if (page==='schedule')   { state.data.list = await getAll('schedule','dayNumber','asc'); }
-    else if (page==='aarti')      { state.data.list = await getAll('aartis','order','asc'); }
-    else if (page==='feedback')   { state.data.list = await getAll('feedback'); }
-    else if (page==='gallery') {
-      const snap = await col('gallery').orderBy('year','desc').get();
-      state.albums = snap.docs.map(d=>({id:d.id,...d.data()}));
-    }
-  } catch(e) { toast('Failed to load data: '+e.message, false); }
-  state.loading = false; renderShell(page); renderCurrentPage();
-}
-
-// ─── Render engine ────────────────────────────────────────────────────────────
+// ── Render functions ──────────────────────────────────────────────────────────
 function render(page) {
   state.page = page;
   if (page === 'login') { renderLogin(); return; }
-  renderShell(page);
-  loadPage(page);
+  renderShell();
+  loadAndRender(page);
 }
 
 function renderLogin() {
-  $('app').innerHTML = `
-  <div class="min-h-screen bg-orange-50 flex items-center justify-center px-4">
-    <div class="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
-      <div class="text-center mb-8">
-        <div class="text-5xl mb-3">🙏</div>
-        <h1 class="text-2xl font-bold text-gray-900">Bal Gopal Mitra Mandal</h1>
-        <p class="text-sm text-gray-500 mt-1">Admin Panel · Sign In</p>
-      </div>
-      <form id="loginForm" class="space-y-5">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-          <input id="loginEmail" type="email" required placeholder="admin@mandal.com" autocomplete="email"
-            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"/>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input id="loginPw" type="password" required placeholder="••••••••" autocomplete="current-password"
-            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"/>
-        </div>
-        <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 rounded-lg transition-colors">
-          Sign In
-        </button>
-      </form>
-      <p class="text-center text-xs text-gray-400 mt-6">Admin access only · Ganeshotsav 2026</p>
-    </div>
-  </div>`;
-  $('loginForm').onsubmit = e => { e.preventDefault(); login($('loginEmail').value, $('loginPw').value); };
+  $('app').innerHTML =
+    '<div style="min-height:100vh;background:#fff7ed;display:flex;align-items:center;justify-content:center;padding:20px">' +
+      '<div style="background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.1);width:100%;max-width:400px;padding:36px">' +
+        '<div style="text-align:center;margin-bottom:28px">' +
+          '<div style="font-size:52px;margin-bottom:8px">\uD83D\uDE4F</div>' +
+          '<h1 style="font-size:22px;font-weight:700;color:#111">Bal Gopal Mitra Mandal</h1>' +
+          '<p style="font-size:13px;color:#6b7280;margin-top:4px">Admin Panel &middot; Sign In</p>' +
+        '</div>' +
+        '<form id="loginForm" onsubmit="doLogin(event)" autocomplete="on">' +
+          '<label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Email address</label>' +
+          '<input id="loginEmail" type="email" required placeholder="admin@example.com" autocomplete="email" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 13px;font-size:14px;margin-bottom:14px;box-sizing:border-box;outline:none"/>' +
+          '<label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Password</label>' +
+          '<input id="loginPw" type="password" required placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" autocomplete="current-password" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 13px;font-size:14px;margin-bottom:18px;box-sizing:border-box;outline:none"/>' +
+          '<button id="loginBtn" type="submit" style="width:100%;background:#ea580c;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer">Sign In</button>' +
+        '</form>' +
+        '<p id="loginError" style="margin-top:14px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;display:none"></p>' +
+        '<p style="text-align:center;font-size:11px;color:#9ca3af;margin-top:20px">Admin access only &middot; Ganeshotsav 2026</p>' +
+      '</div>' +
+    '</div>';
 }
 
-function navLink(page, icon, label) {
-  const active = state.page===page;
-  return `<a href="#" onclick="render('${page}');return false"
-    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active?'bg-orange-50 text-orange-700':'text-gray-600 hover:bg-gray-50'}">
-    <span class="text-base">${icon}</span>${label}</a>`;
+function sidebar() {
+  var nav = [
+    ['dashboard', '\uD83D\uDCCA', 'Dashboard'],
+    ['updates',   '\uD83D\uDCE2', 'Updates'],
+    ['schedule',  '\uD83D\uDCC5', 'Schedule'],
+    ['aarti',     '\uD83D\uDE4F', 'Aarti'],
+    ['gallery',   '\uD83D\uDDBC\uFE0F', 'Gallery'],
+    ['feedback',  '\uD83D\uDCAC', 'Feedback']
+  ];
+  var links = nav.map(function(n) {
+    var active = state.page === n[0];
+    return '<a href="#" onclick="render(\'' + n[0] + '\');return false" class="nav-item' + (active ? ' active' : '') + '">' +
+      '<span>' + n[1] + '</span>' + n[2] + '</a>';
+  }).join('');
+  return '<aside class="sidebar">' +
+    '<div style="padding:20px 24px;border-bottom:1px solid #f3f4f6">' +
+      '<div style="font-size:24px;margin-bottom:4px">\uD83D\uDE4F</div>' +
+      '<div style="font-weight:700;font-size:13px;color:#111;line-height:1.3">Bal Gopal Mitra Mandal</div>' +
+      '<div style="font-size:11px;color:#ea580c;font-weight:500">Admin Panel</div>' +
+    '</div>' +
+    '<nav style="flex:1;padding:12px;display:flex;flex-direction:column;gap:2px">' + links + '</nav>' +
+    '<div style="padding:16px;border-top:1px solid #f3f4f6">' +
+      '<p style="font-size:11px;color:#9ca3af;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (state.user ? state.user.email : '') + '</p>' +
+      '<button onclick="logout()" style="font-size:13px;color:#ef4444;background:none;border:none;cursor:pointer;font-weight:500">Sign out \u2192</button>' +
+    '</div>' +
+  '</aside>';
 }
 
-function renderShell(page) {
-  $('app').innerHTML = `
-  <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="w-56 min-h-screen bg-white border-r border-gray-200 flex flex-col fixed top-0 left-0 h-full z-40">
-      <div class="px-6 py-5 border-b border-gray-100">
-        <div class="text-2xl mb-1">🙏</div>
-        <h1 class="font-bold text-gray-900 text-sm leading-tight">Bal Gopal Mitra Mandal</h1>
-        <p class="text-xs text-orange-600 font-medium">Admin Panel</p>
-      </div>
-      <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        ${navLink('dashboard','📊','Dashboard')}
-        ${navLink('updates','📢','Updates')}
-        ${navLink('schedule','📅','Schedule')}
-        ${navLink('aarti','🙏','Aarti')}
-        ${navLink('gallery','🖼️','Gallery')}
-        ${navLink('feedback','💬','Feedback')}
-      </nav>
-      <div class="px-4 py-4 border-t border-gray-100">
-        <p class="text-xs text-gray-400 truncate mb-2">${state.user?.email||''}</p>
-        <button onclick="logout()" class="text-sm text-red-500 hover:text-red-700 font-medium">Sign out →</button>
-      </div>
-    </aside>
-    <!-- Main content -->
-    <main class="flex-1 ml-56 p-6 min-h-screen" id="mainContent">
-      <div class="flex items-center justify-center h-40">
-        <div class="text-gray-400 text-sm animate-pulse">Loading…</div>
-      </div>
-    </main>
-  </div>
-  <div id="modalContainer"></div>`;
+function renderShell() {
+  $('app').innerHTML =
+    '<div style="display:flex;min-height:100vh">' +
+      sidebar() +
+      '<main id="main" style="flex:1;margin-left:224px;padding:24px;background:#f9fafb;min-height:100vh">' +
+        '<div class="pulse" style="height:3px;background:#ea580c;border-radius:2px;width:60%;margin:40px auto"></div>' +
+      '</main>' +
+    '</div>' +
+    '<div id="modal"></div>';
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
+function setMain(html) { var m = $('main'); if (m) m.innerHTML = html; }
+
+// ── Firestore helpers ─────────────────────────────────────────────────────────
+function col(name) { return db.collection(name); }
+function addFsDoc(name, data) { return col(name).add(data); }
+function setFsDoc(name, id, data) { return col(name).doc(id).set(data, {merge:true}); }
+function delFsDoc(name, id) { return col(name).doc(id).delete(); }
+function getAll(name, order, dir) {
+  return col(name).orderBy(order || 'timestamp', dir || 'desc').get()
+    .then(function(s) { return s.docs.map(function(d) { var o = d.data(); o.id = d.id; return o; }); });
+}
+
+// ── Page loaders ──────────────────────────────────────────────────────────────
+function loadAndRender(page) {
+  state.loading = true;
+  var load;
+  if (page === 'dashboard') {
+    load = Promise.all([col('updates').get(), col('aartis').get(), col('feedback').get(), col('device_tokens').get()])
+      .then(function(results) {
+        var unread = results[2].docs.filter(function(d) { return !d.data().isRead; }).length;
+        state.data = { updates: results[0].size, aartis: results[1].size, feedback: results[2].size, unread: unread, devices: results[3].size };
+      });
+  } else if (page === 'updates')  { load = getAll('updates').then(function(l) { state.data.list = l; }); }
+  else if (page === 'schedule')   { load = getAll('schedule', 'dayNumber', 'asc').then(function(l) { state.data.list = l; }); }
+  else if (page === 'aarti')      { load = getAll('aartis', 'order', 'asc').then(function(l) { state.data.list = l; }); }
+  else if (page === 'feedback')   { load = getAll('feedback').then(function(l) { state.data.list = l; }); }
+  else if (page === 'gallery')    {
+    load = col('gallery').orderBy('year', 'desc').get()
+      .then(function(s) { state.albums = s.docs.map(function(d) { var o = d.data(); o.id = d.id; return o; }); });
+  } else { load = Promise.resolve(); }
+
+  load.catch(function(e) { toast('Load error: ' + e.message, false); })
+    .then(function() {
+      state.loading = false;
+      renderPage(page);
+    });
+}
+
+function renderPage(page) {
+  var pages = {
+    dashboard: renderDashboard, updates: renderUpdates, schedule: renderSchedule,
+    aarti: renderAarti, feedback: renderFeedback, gallery: renderGallery
+  };
+  if (pages[page]) pages[page]();
+}
+
+// ── Page headers ──────────────────────────────────────────────────────────────
+function pageHeader(title, sub, btnLabel, btnFn) {
+  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">' +
+    '<div><h2 style="font-size:22px;font-weight:700;color:#111;margin:0">' + title + '</h2>' +
+    '<p style="font-size:13px;color:#6b7280;margin-top:2px">' + sub + '</p></div>' +
+    (btnLabel ? '<button class="btn btn-primary" onclick="' + btnFn + '">' + btnLabel + '</button>' : '') +
+  '</div>';
+}
+
+function emptyState(msg) {
+  return '<div style="background:#fff;border:1px dashed #d1d5db;border-radius:12px;padding:48px;text-align:center;color:#9ca3af;font-size:14px">' + msg + '</div>';
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 function renderDashboard() {
-  const d = state.data;
-  $('mainContent').innerHTML = `
-  <div>
-    <div class="mb-6"><h2 class="text-2xl font-bold text-gray-900">Dashboard</h2><p class="text-sm text-gray-500 mt-1">Ganeshotsav 2026 · Overview</p></div>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      ${statCard('📢','Total Updates',d.updates)}
-      ${statCard('🙏','Aartis',d.aartis)}
-      ${statCard('💬','Feedback',d.feedback, d.unread>0?`${d.unread} unread`:'')}
-      ${statCard('📱','Devices',d.devices)}
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 class="font-semibold text-gray-800 mb-4">Quick Actions</h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        ${quickLink('updates','✏️','Post Update')}
-        ${quickLink('schedule','📅','Edit Schedule')}
-        ${quickLink('aarti','🙏','Manage Aartis')}
-        ${quickLink('feedback','💬','View Feedback')}
-      </div>
-    </div>
-  </div>`;
-}
-const statCard = (icon,label,val,sub='') => `
-  <div class="bg-white rounded-xl border border-gray-200 p-5">
-    <div class="flex items-center gap-3 mb-3"><span class="text-2xl">${icon}</span><p class="text-sm text-gray-500 font-medium">${label}</p></div>
-    <p class="text-3xl font-bold text-gray-900">${val??0}</p>
-    ${sub?`<p class="text-xs text-orange-600 mt-1 font-medium">${sub}</p>`:''}
-  </div>`;
-const quickLink = (page,icon,label) => `
-  <a href="#" onclick="render('${page}');return false"
-    class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-100 hover:border-orange-200 hover:bg-orange-50 transition-colors text-center">
-    <span class="text-2xl">${icon}</span><span class="text-xs font-medium text-gray-700">${label}</span>
-  </a>`;
+  var d = state.data;
+  var stats = [
+    ['\uD83D\uDCE2', 'Total Updates', d.updates || 0, ''],
+    ['\uD83D\uDE4F', 'Aartis', d.aartis || 0, ''],
+    ['\uD83D\uDCAC', 'Feedback', d.feedback || 0, d.unread ? d.unread + ' unread' : ''],
+    ['\uD83D\uDCF1', 'Registered Devices', d.devices || 0, '']
+  ];
+  var cards = stats.map(function(s) {
+    return '<div class="card p5">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:22px">' + s[0] + '</span><p style="font-size:13px;color:#6b7280;font-weight:500">' + s[1] + '</p></div>' +
+      '<p style="font-size:28px;font-weight:700;color:#111">' + s[2] + '</p>' +
+      (s[3] ? '<p style="font-size:12px;color:#ea580c;margin-top:2px;font-weight:500">' + s[3] + '</p>' : '') +
+    '</div>';
+  }).join('');
 
-// ─── Updates ──────────────────────────────────────────────────────────────────
+  var quick = [['updates','✏️','Post Update'],['schedule','📅','Edit Schedule'],['aarti','🙏','Manage Aartis'],['feedback','💬','View Feedback']];
+  var qlinks = quick.map(function(q) {
+    return '<a href="#" onclick="render(\'' + q[0] + '\');return false" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px;border-radius:10px;border:1px solid #f3f4f6;text-decoration:none;color:#374151;transition:background .15s;font-size:12px;font-weight:500" onmouseover="this.style.background=\'#fff7ed\'" onmouseout="this.style.background=\'\'">' +
+      '<span style="font-size:24px">' + q[1] + '</span>' + q[2] + '</a>';
+  }).join('');
+
+  setMain(
+    pageHeader('Dashboard', 'Ganeshotsav 2026 \u00B7 Overview') +
+    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px">' + cards + '</div>' +
+    '<div class="card p5"><h3 style="font-weight:600;color:#111;margin-bottom:16px;font-size:15px">Quick Actions</h3>' +
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">' + qlinks + '</div></div>'
+  );
+}
+
+// ── Updates ───────────────────────────────────────────────────────────────────
 function renderUpdates() {
-  const list = state.data.list || [];
-  $('mainContent').innerHTML = `
-  <div>
-    <div class="flex items-center justify-between mb-6">
-      <div><h2 class="text-2xl font-bold text-gray-900">Updates</h2><p class="text-sm text-gray-500">Manage mandal announcements</p></div>
-      <button onclick="openUpdateModal(null)" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">+ New Update</button>
-    </div>
-    ${list.length===0?emptyState('No updates yet. Create the first one!'):
-      `<div class="space-y-3">${list.map(u=>updateCard(u)).join('')}</div>`}
-  </div>`;
-}
-const updateCard = u => `
-  <div class="bg-white rounded-xl border ${u.isPinned?'border-orange-300 bg-orange-50':'border-gray-200'} p-4 flex gap-4 items-start">
-    <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-2 mb-1 flex-wrap">
-        ${u.isPinned?'<span class="text-xs font-bold text-orange-600">📌 Pinned</span>':''}
-        <span class="chip ${TAG_COLORS[u.tag]||'bg-gray-100 text-gray-700'}">${capitalize(u.tag)}</span>
-        <span class="text-xs text-gray-400">${fmt(u.timestamp)}</span>
-      </div>
-      <h3 class="font-semibold text-gray-900">${u.title}</h3>
-      <p class="text-sm text-gray-600 mt-0.5 line-clamp-2">${u.body}</p>
-    </div>
-    <div class="flex gap-2 shrink-0">
-      <button onclick="togglePin('${u.id}',${u.isPinned})" class="text-xs px-2 py-1 rounded border ${u.isPinned?'border-orange-400 text-orange-600':'border-gray-200 text-gray-500'}">${u.isPinned?'Unpin':'Pin'}</button>
-      <button onclick="openUpdateModal(${JSON.stringify(u).split('"').join("'")})" class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-50">Edit</button>
-      <button onclick="deleteItem('updates','${u.id}')" class="text-xs px-2 py-1 rounded border border-red-200 text-red-500 hover:bg-red-50">Delete</button>
-    </div>
-  </div>`;
+  var list = state.data.list || [];
+  var rows = list.map(function(u) {
+    return '<div class="card p4" style="margin-bottom:12px;display:flex;gap:16px;align-items:flex-start;' + (u.isPinned ? 'border-color:#fdba74;background:#fff7ed' : '') + '">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">' +
+          (u.isPinned ? '<span style="font-size:11px;font-weight:700;color:#ea580c">\uD83D\uDCCC Pinned</span>' : '') +
+          '<span class="badge ' + (TAG_COLORS[u.tag] || 'badge-notice') + '">' + cap(u.tag || 'notice') + '</span>' +
+          '<span style="font-size:11px;color:#9ca3af">' + fmt(u.timestamp) + '</span>' +
+        '</div>' +
+        '<p style="font-weight:600;color:#111;font-size:14px;margin-bottom:3px">' + (u.title || '') + '</p>' +
+        '<p style="font-size:13px;color:#4b5563;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">' + (u.body || '') + '</p>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-shrink:0">' +
+        '<button class="btn btn-ghost btn-sm" onclick="togglePin(\'' + u.id + '\',' + u.isPinned + ')">' + (u.isPinned ? 'Unpin' : 'Pin') + '</button>' +
+        '<button class="btn btn-ghost btn-sm" onclick="openUpdateModal(' + escJ(u) + ')">Edit</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="delItem(\'updates\',\'' + u.id + '\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 
-async function togglePin(id, cur) {
-  await setDoc('updates',id,{isPinned:!cur}); toast(!cur?'Pinned':'Unpinned'); await loadPage('updates'); renderUpdates();
+  setMain(
+    pageHeader('Updates', 'Manage mandal announcements', '+ New Update', 'openUpdateModal(null)') +
+    (list.length ? rows : emptyState('No updates yet.'))
+  );
+}
+
+function togglePin(id, cur) {
+  setFsDoc('updates', id, {isPinned: !cur}).then(function() { toast(cur ? 'Unpinned' : 'Pinned'); loadAndRender('updates'); });
 }
 
 function openUpdateModal(u) {
-  const isEdit = !!u;
-  $('modalContainer').innerHTML = modal(isEdit?'Edit Update':'New Update', `
-    <div class="space-y-4">
-      <div>
-        <label class="label">Title *</label>
-        <input id="mTitle" value="${u?.title||''}" placeholder="e.g. Aarti timing update" class="input"/>
-      </div>
-      <div>
-        <label class="label">Body *</label>
-        <textarea id="mBody" rows="4" placeholder="Full announcement text…" class="input resize-none">${u?.body||''}</textarea>
-      </div>
-      <div class="flex gap-4">
-        <div class="flex-1">
-          <label class="label">Tag</label>
-          <select id="mTag" class="input">
-            ${['puja','event','notice','traffic','emergency'].map(t=>`<option value="${t}" ${u?.tag===t?'selected':''}>${capitalize(t)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="flex items-end pb-1">
-          <label class="flex items-center gap-2 cursor-pointer text-sm">
-            <input type="checkbox" id="mPin" ${u?.isPinned?'checked':''} class="w-4 h-4 accent-orange-600"/>
-            Pin to top
-          </label>
-        </div>
-      </div>
-    </div>`,
-    `saveUpdate('${u?.id||''}')`, isEdit?'Save Changes':'Post Update');
+  var tags = ['puja','event','notice','traffic','emergency'];
+  var opts = tags.map(function(t) { return '<option value="' + t + '"' + (u && u.tag === t ? ' selected' : '') + '>' + cap(t) + '</option>'; }).join('');
+  showModal(u ? 'Edit Update' : 'New Update',
+    fld('Title *', '<input id="mTitle" class="inp" placeholder="e.g. Aarti timing update" value="' + esc(u && u.title || '') + '"/>') +
+    fld('Body *', '<textarea id="mBody" class="inp" rows="4" placeholder="Announcement text\u2026">' + esc(u && u.body || '') + '</textarea>') +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+      fld('Tag', '<select id="mTag" class="sel">' + opts + '</select>') +
+      '<div style="display:flex;align-items:flex-end;padding-bottom:4px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mPin"' + (u && u.isPinned ? ' checked' : '') + ' style="width:15px;height:15px;accent-color:#ea580c"/> Pin to top</label></div>' +
+    '</div>',
+    'saveUpdate(\'' + (u ? u.id : '') + '\')',
+    u ? 'Save Changes' : 'Post Update'
+  );
 }
 
-async function saveUpdate(id) {
-  const title = $('mTitle').value.trim(), body = $('mBody').value.trim();
-  const tag   = $('mTag').value, isPinned = $('mPin').checked;
-  if (!title||!body) { toast('Title and body required',false); return; }
-  try {
-    if (id) { await setDoc('updates',id,{title,body,tag,isPinned}); toast('Update saved'); }
-    else     { await addDoc('updates',{title,body,tag,isPinned,timestamp:Date.now()}); toast('Update posted!'); }
-    closeModal(); await loadPage('updates'); renderUpdates();
-  } catch(e) { toast(e.message,false); }
+function saveUpdate(id) {
+  var title = $('mTitle').value.trim(), body = $('mBody').value.trim();
+  var tag = $('mTag').value, isPinned = $('mPin').checked;
+  if (!title || !body) { toast('Title and body required', false); return; }
+  var p = id ? setFsDoc('updates', id, {title:title, body:body, tag:tag, isPinned:isPinned})
+             : addFsDoc('updates', {title:title, body:body, tag:tag, isPinned:isPinned, timestamp:Date.now()});
+  p.then(function() { toast(id ? 'Update saved' : 'Update posted!'); closeModal(); loadAndRender('updates'); })
+   .catch(function(e) { toast('Save failed: ' + e.message, false); });
 }
 
-// ─── Schedule ─────────────────────────────────────────────────────────────────
+// ── Schedule ──────────────────────────────────────────────────────────────────
 function renderSchedule() {
-  const list = state.data.list || [];
-  $('mainContent').innerHTML = `
-  <div>
-    <div class="flex items-center justify-between mb-6">
-      <div><h2 class="text-2xl font-bold text-gray-900">Schedule</h2><p class="text-sm text-gray-500">10-day Ganeshotsav timetable</p></div>
-      <button onclick="openScheduleModal(null)" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">+ Add Day</button>
-    </div>
-    ${list.length===0?emptyState('No schedule yet.'):
-      `<div class="space-y-3">${list.map(d=>scheduleCard(d)).join('')}</div>`}
-  </div>`;
-}
-const scheduleCard = d => `
-  <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-4">
-    <div class="bg-orange-100 text-orange-800 font-bold text-sm rounded-lg px-3 py-2 text-center min-w-[60px]">
-      <div class="text-lg leading-none">${d.dayNumber}</div>
-      <div class="text-xs font-normal">${d.date}</div>
-    </div>
-    <div class="flex-1">
-      <p class="font-semibold text-gray-900">${d.dayName}</p>
-      <p class="text-sm text-gray-500 mt-0.5">${(d.events||[]).map(e=>`${e.time} — ${e.name}`).join(' · ')}</p>
-    </div>
-    <div class="flex gap-2">
-      <button onclick="openScheduleModal(${safeJson(d)})" class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600">Edit</button>
-      <button onclick="deleteItem('schedule','${d.id}')" class="text-xs px-2 py-1 rounded border border-red-200 text-red-500">Delete</button>
-    </div>
-  </div>`;
+  var list = state.data.list || [];
+  var rows = list.map(function(d) {
+    var evStr = (d.events || []).map(function(e) { return e.time + ' \u2014 ' + e.name; }).join(' \u00B7 ');
+    return '<div class="card p4" style="margin-bottom:10px;display:flex;align-items:flex-start;gap:16px">' +
+      '<div style="background:#ffedd5;color:#9a3412;font-weight:700;border-radius:10px;padding:10px 14px;text-align:center;min-width:60px;flex-shrink:0">' +
+        '<div style="font-size:18px;line-height:1">' + d.dayNumber + '</div>' +
+        '<div style="font-size:11px;font-weight:400">' + (d.date || '') + '</div>' +
+      '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<p style="font-weight:600;color:#111;font-size:14px">' + (d.dayName || '') + '</p>' +
+        '<p style="font-size:12px;color:#6b7280;margin-top:2px">' + evStr + '</p>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-shrink:0">' +
+        '<button class="btn btn-ghost btn-sm" onclick="openSchedModal(' + escJ(d) + ')">Edit</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="delItem(\'schedule\',\'' + d.id + '\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 
-function openScheduleModal(d) {
-  const events = d?.events?.length ? d.events : [{time:'',name:'',notes:''}];
-  $('modalContainer').innerHTML = modal(d?'Edit Day':'Add Day', `
-    <div class="space-y-4">
-      <div class="grid grid-cols-3 gap-3">
-        <div><label class="label">Day #</label><input id="sDayNum" type="number" min="1" max="10" value="${d?.dayNumber||1}" class="input"/></div>
-        <div class="col-span-2"><label class="label">Date (e.g. 22 Aug)</label><input id="sDate" value="${d?.date||''}" placeholder="22 Aug" class="input"/></div>
-      </div>
-      <div><label class="label">Day Name</label><input id="sDayName" value="${d?.dayName||''}" placeholder="Day 1 — Ganesh Sthapana" class="input"/></div>
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <label class="label" style="margin:0">Events</label>
-          <button onclick="addEventRow()" class="text-xs text-orange-600 font-medium">+ Add event</button>
-        </div>
-        <div id="eventsContainer" class="space-y-2">
-          ${events.map((e,i)=>eventRow(i,e.time,e.name,e.notes||'')).join('')}
-        </div>
-      </div>
-    </div>`, `saveSchedule('${d?.id||''}')`, d?'Save':'Add Day');
-}
-const eventRow = (i,time='',name='',notes='') => `
-  <div id="erow${i}" class="flex gap-2 items-center">
-    <input class="w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="7:00 AM" value="${time}" data-field="time" data-row="${i}"/>
-    <input class="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Event name" value="${name}" data-field="name" data-row="${i}"/>
-    <input class="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Notes" value="${notes}" data-field="notes" data-row="${i}"/>
-    <button onclick="this.closest('[id]').remove()" class="text-red-400 text-lg leading-none">×</button>
-  </div>`;
-let _eRowCount = 3;
-function addEventRow() {
-  $('eventsContainer').insertAdjacentHTML('beforeend', eventRow(_eRowCount++));
-}
-async function saveSchedule(id) {
-  const dayNumber = +$('sDayNum').value, date = $('sDate').value.trim(), dayName = $('sDayName').value.trim();
-  if (!dayName||!date) { toast('Day name and date required',false); return; }
-  const rows = document.querySelectorAll('#eventsContainer > div');
-  const events = Array.from(rows).map(r => ({
-    time:  r.querySelector('[data-field=time]').value.trim(),
-    name:  r.querySelector('[data-field=name]').value.trim(),
-    notes: r.querySelector('[data-field=notes]').value.trim()
-  })).filter(e=>e.name);
-  try {
-    if (id) { await setDoc('schedule',id,{dayNumber,date,dayName,events}); toast('Schedule updated'); }
-    else     { await addDoc('schedule',{dayNumber,date,dayName,events}); toast('Day added'); }
-    closeModal(); await loadPage('schedule'); renderSchedule();
-  } catch(e) { toast(e.message,false); }
+  setMain(pageHeader('Schedule', '10-day Ganeshotsav timetable', '+ Add Day', 'openSchedModal(null)') + (list.length ? rows : emptyState('No schedule yet.')));
 }
 
-// ─── Aarti ────────────────────────────────────────────────────────────────────
+function openSchedModal(d) {
+  var evs = d && d.events && d.events.length ? d.events : [{time:'',name:'',notes:''}];
+  var evRows = evs.map(function(e, i) {
+    return '<div class="ev-row" style="display:flex;gap:6px;margin-bottom:6px">' +
+      '<input class="inp ev-time" placeholder="7:00 AM" value="' + esc(e.time || '') + '" style="width:100px"/>' +
+      '<input class="inp ev-name" placeholder="Event name" value="' + esc(e.name || '') + '" style="flex:1"/>' +
+      '<input class="inp ev-note" placeholder="Notes" value="' + esc(e.notes || '') + '" style="flex:1"/>' +
+    '</div>';
+  }).join('');
+
+  showModal(d ? 'Edit Day' : 'Add Day',
+    '<div style="display:grid;grid-template-columns:80px 1fr;gap:12px;margin-bottom:12px">' +
+      fld('Day #', '<input id="sDayNum" class="inp" type="number" min="1" max="10" value="' + (d ? d.dayNumber : 1) + '"/>') +
+      fld('Date', '<input id="sDate" class="inp" placeholder="22 Aug" value="' + esc(d ? d.date : '') + '"/>') +
+    '</div>' +
+    fld('Day Name', '<input id="sDayName" class="inp" placeholder="Day 1 \u2014 Ganesh Sthapana" value="' + esc(d ? d.dayName : '') + '"/>') +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 6px">' +
+      '<label style="font-size:13px;font-weight:500;color:#374151">Events</label>' +
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="addEvRow()" style="font-size:12px">+ Add event</button>' +
+    '</div>' +
+    '<div id="evContainer">' + evRows + '</div>',
+    'saveSched(\'' + (d ? d.id : '') + '\')',
+    d ? 'Save' : 'Add Day'
+  );
+}
+
+window.addEvRow = function() {
+  var c = $('evContainer');
+  if (!c) return;
+  var row = document.createElement('div');
+  row.className = 'ev-row';
+  row.style.cssText = 'display:flex;gap:6px;margin-bottom:6px';
+  row.innerHTML = '<input class="inp ev-time" placeholder="7:00 AM" style="width:100px"/>' +
+    '<input class="inp ev-name" placeholder="Event name" style="flex:1"/>' +
+    '<input class="inp ev-note" placeholder="Notes" style="flex:1"/>';
+  c.appendChild(row);
+};
+
+function saveSched(id) {
+  var dayNumber = parseInt($('sDayNum').value), date = $('sDate').value.trim(), dayName = $('sDayName').value.trim();
+  if (!dayName || !date) { toast('Day name and date required', false); return; }
+  var rows = document.querySelectorAll('#evContainer .ev-row');
+  var events = Array.from(rows).map(function(r) {
+    return { time: r.querySelector('.ev-time').value.trim(), name: r.querySelector('.ev-name').value.trim(), notes: r.querySelector('.ev-note').value.trim() };
+  }).filter(function(e) { return e.name; });
+  var p = id ? setFsDoc('schedule', id, {dayNumber:dayNumber, date:date, dayName:dayName, events:events})
+             : addFsDoc('schedule', {dayNumber:dayNumber, date:date, dayName:dayName, events:events});
+  p.then(function() { toast('Schedule saved'); closeModal(); loadAndRender('schedule'); })
+   .catch(function(e) { toast('Save failed: ' + e.message, false); });
+}
+
+// ── Aarti ─────────────────────────────────────────────────────────────────────
 function renderAarti() {
-  const list = state.data.list || [];
-  $('mainContent').innerHTML = `
-  <div>
-    <div class="flex items-center justify-between mb-6">
-      <div><h2 class="text-2xl font-bold text-gray-900">Aarti</h2><p class="text-sm text-gray-500">Manage Marathi aarti lyrics</p></div>
-      <button onclick="openAartiModal(null)" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">+ Add Aarti</button>
-    </div>
-    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5 text-sm text-blue-700">
-      💡 <strong>Tip:</strong> Compose Devanagari lyrics in Google Docs with Marathi keyboard, then paste here.
-    </div>
-    ${list.length===0?emptyState('No aartis yet.'):
-      `<div class="space-y-2">${list.map(a=>aartiCard(a)).join('')}</div>`}
-  </div>`;
-}
-const aartiCard = a => `
-  <div class="bg-white rounded-xl border ${!a.isActive?'opacity-50':'border-gray-200'} p-4 flex items-center gap-3">
-    <div class="flex flex-col gap-0.5 items-center">
-      <button onclick="moveAarti('${a.id}',${a.order},-1)" class="text-gray-400 hover:text-gray-700 text-xs">▲</button>
-      <span class="text-xs text-gray-400">${a.order}</span>
-      <button onclick="moveAarti('${a.id}',${a.order},1)" class="text-gray-400 hover:text-gray-700 text-xs">▼</button>
-    </div>
-    <div class="text-xl">🙏</div>
-    <div class="flex-1 min-w-0">
-      <p class="font-semibold text-gray-900">${a.name}</p>
-      <p class="text-xs text-gray-400 truncate">${(a.lyrics||'').split('\n')[0]}</p>
-    </div>
-    <div class="flex gap-2 items-center shrink-0">
-      <button onclick="toggleAarti('${a.id}',${a.isActive})"
-        class="text-xs px-2 py-1 rounded border ${a.isActive?'border-green-300 text-green-700 bg-green-50':'border-gray-200 text-gray-500'}">
-        ${a.isActive?'Visible':'Hidden'}</button>
-      <button onclick="openAartiModal(${safeJson(a)})" class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600">Edit</button>
-      <button onclick="deleteItem('aartis','${a.id}')" class="text-xs px-2 py-1 rounded border border-red-200 text-red-500">Delete</button>
-    </div>
-  </div>`;
+  var list = state.data.list || [];
+  var rows = list.map(function(a) {
+    return '<div class="card p4" style="margin-bottom:8px;display:flex;align-items:center;gap:12px;' + (!a.isActive ? 'opacity:.5' : '') + '">' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">' +
+        '<button onclick="moveAarti(\'' + a.id + '\',' + a.order + ',-1)" style="background:none;border:none;cursor:pointer;font-size:11px;color:#6b7280">\u25B2</button>' +
+        '<span style="font-size:11px;color:#9ca3af">' + a.order + '</span>' +
+        '<button onclick="moveAarti(\'' + a.id + '\',' + a.order + ',1)" style="background:none;border:none;cursor:pointer;font-size:11px;color:#6b7280">\u25BC</button>' +
+      '</div>' +
+      '<span style="font-size:20px">\uD83D\uDE4F</span>' +
+      '<div style="flex:1;min-width:0">' +
+        '<p style="font-weight:600;color:#111;font-size:14px">' + (a.name || '') + '</p>' +
+        '<p style="font-size:12px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + ((a.lyrics || '').split('\n')[0]) + '</p>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-shrink:0;align-items:center">' +
+        '<button class="btn btn-ghost btn-sm" style="' + (a.isActive ? 'border-color:#86efac;color:#15803d' : '') + '" onclick="toggleAarti(\'' + a.id + '\',' + a.isActive + ')">' + (a.isActive ? 'Visible' : 'Hidden') + '</button>' +
+        '<button class="btn btn-ghost btn-sm" onclick="openAartiModal(' + escJ(a) + ')">Edit</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="delItem(\'aartis\',\'' + a.id + '\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 
-async function moveAarti(id, order, dir) {
-  await setDoc('aartis',id,{order:order+dir}); await loadPage('aarti'); renderAarti();
+  setMain(
+    pageHeader('Aarti', 'Manage Marathi aarti lyrics', '+ Add Aarti', 'openAartiModal(null)') +
+    '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#1d4ed8">' +
+      '\uD83D\uDCA1 Tip: Compose Devanagari lyrics in Google Docs with a Marathi keyboard, then paste here.' +
+    '</div>' +
+    (list.length ? rows : emptyState('No aartis yet.'))
+  );
 }
-async function toggleAarti(id, cur) {
-  await setDoc('aartis',id,{isActive:!cur}); toast(!cur?'Visible in app':'Hidden from app'); await loadPage('aarti'); renderAarti();
+
+function moveAarti(id, order, dir) {
+  setFsDoc('aartis', id, {order: order + dir}).then(function() { loadAndRender('aarti'); });
+}
+function toggleAarti(id, cur) {
+  setFsDoc('aartis', id, {isActive: !cur}).then(function() { toast(!cur ? 'Visible in app' : 'Hidden from app'); loadAndRender('aarti'); });
 }
 function openAartiModal(a) {
-  $('modalContainer').innerHTML = modal(a?'Edit Aarti':'Add Aarti', `
-    <div class="space-y-4">
-      <div>
-        <label class="label">Aarti Name (Devanagari) *</label>
-        <input id="aName" value="${a?.name||''}" placeholder="सुखकर्ता दुखहर्ता" class="input text-base"/>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label class="label">Display Order</label><input id="aOrder" type="number" value="${a?.order||99}" class="input"/></div>
-        <div class="flex items-end pb-1">
-          <label class="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" id="aActive" ${a?.isActive!==false?'checked':''} class="w-4 h-4 accent-orange-600"/>
-            Active (visible in app)
-          </label>
-        </div>
-      </div>
-      <div>
-        <label class="label">Lyrics (Devanagari) *</label>
-        <p class="text-xs text-gray-400 mb-1">Paste Marathi text directly. Use Enter for new lines.</p>
-        <textarea id="aLyrics" rows="10" placeholder="सुखकर्ता दुखहर्ता वार्ता विघ्नाची ।" class="input resize-y text-base leading-relaxed">${a?.lyrics||''}</textarea>
-      </div>
-    </div>`, `saveAarti('${a?.id||''}')`, a?'Save Changes':'Add Aarti');
+  showModal(a ? 'Edit Aarti' : 'Add Aarti',
+    fld('Aarti Name (Devanagari) *', '<input id="aName" class="inp" style="font-size:16px" placeholder="\u0938\u0941\u0916\u0915\u0930\u094D\u0924\u093E \u0926\u0941\u0916\u0939\u0930\u094D\u0924\u093E" value="' + esc(a && a.name || '') + '"/>') +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' +
+      fld('Display Order', '<input id="aOrder" class="inp" type="number" value="' + (a ? a.order : 99) + '"/>') +
+      '<div style="display:flex;align-items:flex-end;padding-bottom:4px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="aActive"' + (a && a.isActive !== false ? ' checked' : (!a ? ' checked' : '')) + ' style="width:15px;height:15px;accent-color:#ea580c"/> Active in app</label></div>' +
+    '</div>' +
+    fld('Lyrics (Devanagari) *', '<p style="font-size:12px;color:#9ca3af;margin-bottom:6px">Paste Marathi text directly.</p><textarea id="aLyrics" class="inp" rows="10" style="font-size:15px;line-height:1.7">' + esc(a && a.lyrics || '') + '</textarea>'),
+    'saveAarti(\'' + (a ? a.id : '') + '\')',
+    a ? 'Save Changes' : 'Add Aarti'
+  );
 }
-async function saveAarti(id) {
-  const name = $('aName').value.trim(), lyrics = $('aLyrics').value.trim();
-  const order = +$('aOrder').value, isActive = $('aActive').checked;
-  if (!name||!lyrics) { toast('Name and lyrics required',false); return; }
-  try {
-    if (id) { await setDoc('aartis',id,{name,lyrics,order,isActive}); toast('Aarti updated'); }
-    else     { await addDoc('aartis',{name,lyrics,order,isActive}); toast('Aarti added'); }
-    closeModal(); await loadPage('aarti'); renderAarti();
-  } catch(e) { toast(e.message,false); }
+function saveAarti(id) {
+  var name = $('aName').value.trim(), lyrics = $('aLyrics').value.trim();
+  var order = parseInt($('aOrder').value), isActive = $('aActive').checked;
+  if (!name || !lyrics) { toast('Name and lyrics required', false); return; }
+  var p = id ? setFsDoc('aartis', id, {name:name, lyrics:lyrics, order:order, isActive:isActive})
+             : addFsDoc('aartis', {name:name, lyrics:lyrics, order:order, isActive:isActive});
+  p.then(function() { toast('Aarti saved'); closeModal(); loadAndRender('aarti'); })
+   .catch(function(e) { toast('Save failed: ' + e.message, false); });
 }
 
-// ─── Feedback ─────────────────────────────────────────────────────────────────
+// ── Feedback ──────────────────────────────────────────────────────────────────
 function renderFeedback() {
-  const list = state.data.list || [];
-  const unread = list.filter(f=>!f.isRead).length;
-  $('mainContent').innerHTML = `
-  <div>
-    <div class="flex items-center justify-between mb-6">
-      <div><h2 class="text-2xl font-bold text-gray-900">Feedback</h2><p class="text-sm text-gray-500">Resident submissions — read only</p></div>
-      ${unread>0?`<span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1.5 rounded-full">${unread} unread</span>`:''}
-    </div>
-    ${list.length===0?emptyState('No feedback yet.'):
-      `<div class="space-y-3">${list.map(f=>feedbackCard(f)).join('')}</div>`}
-  </div>`;
+  var list = state.data.list || [];
+  var unread = list.filter(function(f) { return !f.isRead; }).length;
+  var rows = list.map(function(f) {
+    var stars = '\u2605'.repeat(f.rating || 0) + '\u2606'.repeat(5 - (f.rating || 0));
+    return '<div class="card p4" style="margin-bottom:10px;' + (!f.isRead ? 'border-color:#fdba74;background:#fff7ed' : '') + '">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">' +
+        '<div style="flex:1">' +
+          '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">' +
+            '<span style="font-weight:600;font-size:13px;color:#111">' + (f.isAnonymous ? '\uD83D\uDD75\uFE0F Anonymous' : '\uD83D\uDC64 ' + esc(f.name || '')) + '</span>' +
+            (!f.isAnonymous && f.phone ? '<span style="font-size:12px;color:#6b7280">\uD83D\uDCF1 ' + esc(f.phone) + '</span>' : '') +
+            (f.rating ? '<span style="color:#f59e0b;font-size:13px">' + stars + '</span>' : '') +
+            '<span style="font-size:11px;color:#9ca3af">' + fmt(f.timestamp) + '</span>' +
+            (!f.isRead ? '<span style="background:#ea580c;color:#fff;font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700">NEW</span>' : '') +
+          '</div>' +
+          '<p style="font-size:13px;color:#374151;line-height:1.6">' + esc(f.feedback || '') + '</p>' +
+        '</div>' +
+        (!f.isRead ? '<button class="btn btn-ghost btn-sm" style="flex-shrink:0" onclick="markRead(\'' + f.id + '\')">Mark read</button>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  setMain(
+    pageHeader('Feedback', 'Resident submissions \u2014 read only', '', '') +
+    (unread ? '<p style="font-size:13px;background:#ffedd5;color:#c2410c;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-weight:500">' + unread + ' unread submission' + (unread > 1 ? 's' : '') + '</p>' : '') +
+    (list.length ? rows : emptyState('No feedback yet.'))
+  );
 }
-const feedbackCard = f => `
-  <div class="bg-white rounded-xl border ${!f.isRead?'border-orange-200 bg-orange-50':'border-gray-200'} p-4">
-    <div class="flex items-start justify-between gap-3">
-      <div class="flex-1">
-        <div class="flex items-center gap-3 mb-2 flex-wrap">
-          <span class="font-semibold text-sm text-gray-900">${f.isAnonymous?'🕵️ Anonymous':'👤 '+f.name}</span>
-          ${!f.isAnonymous&&f.phone?`<span class="text-xs text-gray-500">📱 ${f.phone}</span>`:''}
-          ${f.rating>0?`<span class="text-yellow-400 text-sm">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</span>`:''}
-          <span class="text-xs text-gray-400">${fmt(f.timestamp)}</span>
-          ${!f.isRead?'<span class="text-xs bg-orange-600 text-white px-2 py-0.5 rounded-full font-bold">NEW</span>':''}
-        </div>
-        <p class="text-sm text-gray-700 leading-relaxed">${f.feedback}</p>
-      </div>
-      ${!f.isRead?`<button onclick="markFbRead('${f.id}')" class="text-xs text-orange-600 border border-orange-300 hover:bg-orange-50 px-2 py-1 rounded shrink-0">Mark read</button>`:''}
-    </div>
-  </div>`;
-async function markFbRead(id) {
-  await setDoc('feedback',id,{isRead:true}); toast('Marked as read'); await loadPage('feedback'); renderFeedback();
+function markRead(id) {
+  setFsDoc('feedback', id, {isRead: true}).then(function() { toast('Marked as read'); loadAndRender('feedback'); });
 }
 
-// ─── Gallery ──────────────────────────────────────────────────────────────────
+// ── Gallery ───────────────────────────────────────────────────────────────────
 function renderGallery() {
-  const albums = state.albums || [];
-  const active = state.activeAlbum;
-  $('mainContent').innerHTML = `
-  <div>
-    <div class="flex items-center justify-between mb-6">
-      <div><h2 class="text-2xl font-bold text-gray-900">Gallery</h2><p class="text-sm text-gray-500">Year-wise photo albums</p></div>
-      <button onclick="openNewAlbumModal()" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">+ New Album</button>
-    </div>
-    <div class="flex gap-5">
-      <div class="w-56 shrink-0 space-y-2">
-        ${albums.length===0?'<p class="text-sm text-gray-400 text-center py-8">No albums</p>':
-          albums.map(a=>`
-          <div onclick="selectAlbum('${a.id}')" class="cursor-pointer rounded-xl border p-3 transition-colors ${active?.id===a.id?'border-orange-400 bg-orange-50':'bg-white border-gray-200 hover:border-orange-200'}">
-            ${a.coverUrl?`<img src="${a.coverUrl}" class="w-full h-24 object-cover rounded-lg mb-2"/>`
-              :'<div class="w-full h-24 bg-gray-100 rounded-lg mb-2 flex items-center justify-center text-3xl">🖼️</div>'}
-            <p class="font-semibold text-sm text-gray-900 truncate">${a.name}</p>
-            <p class="text-xs text-gray-400">${a.year} · ${(a.photos||[]).length} photos</p>
-            <button onclick="event.stopPropagation();deleteAlbumConfirm('${a.id}')" class="mt-1 text-xs text-red-400 hover:text-red-600">Delete album</button>
-          </div>`).join('')}
-      </div>
-      <div class="flex-1" id="photoGrid">
-        ${active?photoGridHtml():emptyState('Select an album to manage photos')}
-      </div>
-    </div>
-  </div>
-  <div id="modalContainer"></div>`;
+  var albums = state.albums || [];
+  var active = state.activeAlbum;
+
+  var albumList = albums.length ? albums.map(function(a) {
+    var isActive = active && active.id === a.id;
+    return '<div onclick="selectAlbum(\'' + a.id + '\')" style="cursor:pointer;border-radius:12px;border:1px solid ' + (isActive ? '#fb923c' : '#e5e7eb') + ';padding:12px;margin-bottom:8px;background:' + (isActive ? '#fff7ed' : '#fff') + '">' +
+      (a.coverUrl ? '<img src="' + esc(a.coverUrl) + '" style="width:100%;height:88px;object-fit:cover;border-radius:8px;margin-bottom:8px"/>'
+        : '<div style="width:100%;height:88px;background:#f3f4f6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:8px">\uD83D\uDDBC\uFE0F</div>') +
+      '<p style="font-weight:600;font-size:13px;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(a.name) + '</p>' +
+      '<p style="font-size:11px;color:#9ca3af">' + a.year + ' \u00B7 ' + (a.photos ? a.photos.length : 0) + ' photos</p>' +
+      '<button onclick="event.stopPropagation();delAlbum(\'' + a.id + '\')" style="font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;margin-top:4px">Delete album</button>' +
+    '</div>';
+  }).join('') : '<p style="font-size:13px;color:#9ca3af;text-align:center;padding:24px 0">No albums</p>';
+
+  var photoArea = active ? photoGrid() : emptyState('Select an album to manage photos');
+
+  setMain(
+    pageHeader('Gallery', 'Year-wise photo albums', '+ New Album', 'openAlbumModal()') +
+    '<div style="display:flex;gap:20px">' +
+      '<div style="width:200px;flex-shrink:0">' + albumList + '</div>' +
+      '<div style="flex:1">' + photoArea + '</div>' +
+    '</div>'
+  );
 }
-function photoGridHtml() {
-  const a = state.activeAlbum;
-  const photos = a?.photos||[];
-  return `
-  <div>
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-semibold text-gray-900">${a.name}</h3>
-      <div class="flex gap-2 items-center">
-        <span id="uploadStatus" class="text-xs text-orange-600 hidden">Uploading…</span>
-        <button onclick="$('photoUpload').click()" class="text-sm bg-white border border-gray-300 hover:border-orange-400 px-3 py-1.5 rounded-lg text-gray-700 font-medium">↑ Upload photos</button>
-        <input id="photoUpload" type="file" multiple accept="image/*" class="hidden" onchange="handlePhotoUpload(this.files)"/>
-      </div>
-    </div>
-    ${photos.length===0?`<div onclick="$('photoUpload').click()" class="bg-white rounded-xl border-2 border-dashed border-gray-200 hover:border-orange-300 h-48 flex flex-col items-center justify-center text-gray-400 gap-2 text-sm cursor-pointer">
-        <span class="text-3xl">📸</span>Click to upload photos</div>`:
-      `<div class="grid grid-cols-3 gap-3">
-        ${photos.map((p,i)=>`
-        <div class="group relative rounded-xl overflow-hidden border border-gray-200 aspect-square">
-          <img src="${p.url}" class="w-full h-full object-cover"/>
-          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-            <button onclick="deletePhoto('${p.storagePath.replace(/'/g,"\\'")}',${i})" class="opacity-0 group-hover:opacity-100 bg-red-600 text-white text-xs px-2 py-1 rounded">Delete</button>
-          </div>
-        </div>`).join('')}
-        <div onclick="$('photoUpload').click()" class="rounded-xl border-2 border-dashed border-gray-200 hover:border-orange-300 aspect-square flex items-center justify-center cursor-pointer text-gray-400 text-2xl">+</div>
-      </div>`}
-  </div>`;
+
+function photoGrid() {
+  var a = state.activeAlbum;
+  var photos = a.photos || [];
+  var grid = photos.map(function(p, i) {
+    return '<div style="position:relative;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;aspect-ratio:1">' +
+      '<img src="' + esc(p.url) + '" style="width:100%;height:100%;object-fit:cover"/>' +
+      '<div style="position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .15s;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background=\'rgba(0,0,0,.4)\';this.querySelector(\'button\').style.opacity=1" onmouseout="this.style.background=\'rgba(0,0,0,0)\';this.querySelector(\'button\').style.opacity=0">' +
+        '<button onclick="delPhoto(' + i + ')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;opacity:0;transition:opacity .15s">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+    '<h3 style="font-weight:600;font-size:15px;color:#111">' + esc(a.name) + '</h3>' +
+    '<label class="btn btn-ghost" style="cursor:pointer">\u2191 Upload photos<input type="file" multiple accept="image/*" id="photoInput" style="display:none" onchange="uploadPhotos(this.files)"/></label>' +
+  '</div>' +
+  '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">' + grid + '</div>';
 }
+
 function selectAlbum(id) {
-  state.activeAlbum = state.albums.find(a=>a.id===id)||null;
+  state.activeAlbum = (state.albums || []).find(function(a) { return a.id === id; }) || null;
   renderGallery();
 }
-function openNewAlbumModal() {
-  const yr = new Date().getFullYear();
-  $('modalContainer').innerHTML = modal('Create Album',`
-    <div class="space-y-3">
-      <div><label class="label">Year</label><input id="gYear" type="number" value="${yr}" class="input"/></div>
-      <div><label class="label">Album Name</label><input id="gName" placeholder="Ganeshotsav ${yr}" class="input"/></div>
-    </div>`, 'createAlbum()', 'Create');
+
+function openAlbumModal() {
+  var yr = new Date().getFullYear();
+  showModal('Create Album',
+    fld('Year', '<input id="gYear" class="inp" type="number" value="' + yr + '"/>') +
+    fld('Album Name', '<input id="gName" class="inp" placeholder="Ganeshotsav ' + yr + '"/>'),
+    'saveAlbum()', 'Create'
+  );
 }
-async function createAlbum() {
-  const year=+$('gYear').value, name=$('gName').value.trim();
-  if(!name){toast('Album name required',false);return;}
-  await addDoc('gallery',{year,name,photos:[],coverUrl:''});
-  toast('Album created'); closeModal();
-  const snap=await col('gallery').orderBy('year','desc').get();
-  state.albums=snap.docs.map(d=>({id:d.id,...d.data()}));
-  renderGallery();
+function saveAlbum() {
+  var year = parseInt($('gYear').value), name = $('gName').value.trim();
+  if (!name) { toast('Album name required', false); return; }
+  addFsDoc('gallery', {year:year, name:name, photos:[], coverUrl:''}).then(function() {
+    toast('Album created'); closeModal();
+    col('gallery').orderBy('year','desc').get().then(function(s) {
+      state.albums = s.docs.map(function(d) { var o = d.data(); o.id = d.id; return o; });
+      renderGallery();
+    });
+  });
 }
-async function deleteAlbumConfirm(id) {
-  if(!confirm('Delete album and all its photos?'))return;
-  await delDoc('gallery',id);
-  if(state.activeAlbum?.id===id)state.activeAlbum=null;
-  state.albums=state.albums.filter(a=>a.id!==id);
-  toast('Album deleted'); renderGallery();
+function delAlbum(id) {
+  if (!confirm('Delete album and all photos?')) return;
+  delFsDoc('gallery', id).then(function() {
+    if (state.activeAlbum && state.activeAlbum.id === id) state.activeAlbum = null;
+    state.albums = (state.albums || []).filter(function(a) { return a.id !== id; });
+    toast('Album deleted'); renderGallery();
+  });
 }
-async function handlePhotoUpload(files) {
-  if(!files||!state.activeAlbum?.id)return;
-  const status=$('uploadStatus'); if(status)status.classList.remove('hidden');
-  const newPhotos=[];
-  try {
-    for(const f of Array.from(files)){
-      const path=`gallery/${state.activeAlbum.id}/${Date.now()}_${f.name}`;
-      const ref=storage.ref(path);
-      await ref.put(f);
-      const url=await ref.getDownloadURL();
-      newPhotos.push({url,storagePath:path,timestamp:Date.now()});
-    }
-    const photos=[...(state.activeAlbum.photos||[]),...newPhotos];
-    await setDoc('gallery',state.activeAlbum.id,{photos,coverUrl:photos[0]?.url||''});
-    state.activeAlbum={...state.activeAlbum,photos,coverUrl:photos[0]?.url||''};
-    state.albums=state.albums.map(a=>a.id===state.activeAlbum.id?state.activeAlbum:a);
-    toast(`${newPhotos.length} photo(s) uploaded`);
-  } catch(e){toast('Upload failed: '+e.message,false);}
-  finally{ $('photoGrid').innerHTML=photoGridHtml(); }
+function uploadPhotos(files) {
+  if (!files || !state.activeAlbum) return;
+  var a = state.activeAlbum;
+  var done = 0, total = files.length, newPhotos = [];
+  Array.from(files).forEach(function(f) {
+    var path = 'gallery/' + a.id + '/' + Date.now() + '_' + f.name;
+    storage.ref(path).put(f).then(function(snap) {
+      return snap.ref.getDownloadURL();
+    }).then(function(url) {
+      newPhotos.push({url:url, storagePath:path, timestamp:Date.now()});
+      done++;
+      if (done === total) {
+        var photos = (a.photos || []).concat(newPhotos);
+        setFsDoc('gallery', a.id, {photos:photos, coverUrl:photos[0].url}).then(function() {
+          state.activeAlbum.photos = photos;
+          state.activeAlbum.coverUrl = photos[0].url;
+          toast(total + ' photo(s) uploaded'); renderGallery();
+        });
+      }
+    }).catch(function(e) { toast('Upload error: ' + e.message, false); });
+  });
 }
-async function deletePhoto(storagePath,idx) {
-  if(!confirm('Delete this photo?'))return;
-  try{ await storage.ref(storagePath).delete(); }catch(e){}
-  const photos=(state.activeAlbum.photos||[]).filter((_,i)=>i!==idx);
-  await setDoc('gallery',state.activeAlbum.id,{photos,coverUrl:photos[0]?.url||''});
-  state.activeAlbum={...state.activeAlbum,photos};
-  state.albums=state.albums.map(a=>a.id===state.activeAlbum.id?state.activeAlbum:a);
-  toast('Photo deleted'); $('photoGrid').innerHTML=photoGridHtml();
+function delPhoto(idx) {
+  if (!confirm('Delete photo?')) return;
+  var a = state.activeAlbum;
+  var photo = a.photos[idx];
+  storage.ref(photo.storagePath).delete().catch(function() {});
+  var photos = a.photos.filter(function(_, i) { return i !== idx; });
+  setFsDoc('gallery', a.id, {photos:photos, coverUrl:photos[0] ? photos[0].url : ''}).then(function() {
+    state.activeAlbum.photos = photos;
+    toast('Photo deleted'); renderGallery();
+  });
 }
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-function emptyState(msg) {
-  return `<div class="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center text-gray-400">${msg}</div>`;
+// ── Shared helpers ────────────────────────────────────────────────────────────
+function fld(label, input) {
+  return '<div style="margin-bottom:14px"><label class="lbl">' + label + '</label>' + input + '</div>';
+}
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function escJ(o) { return "JSON.parse(atob('" + btoa(unescape(encodeURIComponent(JSON.stringify(o)))) + "'))"; }
+
+function showModal(title, body, saveFn, saveLabel) {
+  var m = $('modal');
+  if (!m) return;
+  m.innerHTML =
+    '<div class="modal-bg" onclick="if(event.target===this)closeModal()">' +
+      '<div class="modal-box">' +
+        '<div style="padding:16px 24px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">' +
+          '<h3 style="font-weight:700;font-size:16px;color:#111">' + title + '</h3>' +
+          '<button onclick="closeModal()" style="background:none;border:none;font-size:22px;color:#9ca3af;cursor:pointer;line-height:1">&times;</button>' +
+        '</div>' +
+        '<div style="padding:24px;overflow-y:auto;flex:1">' + body + '</div>' +
+        '<div style="padding:16px 24px;border-top:1px solid #f3f4f6;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0">' +
+          '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>' +
+          '<button class="btn btn-primary" onclick="' + saveFn + '">' + saveLabel + '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+function closeModal() { var m = $('modal'); if (m) m.innerHTML = ''; }
+
+function delItem(coll, id) {
+  if (!confirm('Delete this item permanently?')) return;
+  delFsDoc(coll, id).then(function() { toast('Deleted'); loadAndRender(state.page); });
 }
 
-function modal(title, body, saveFn, saveLbl='Save') {
-  return `
-  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
-      <div class="px-6 py-4 border-b flex items-center justify-between shrink-0">
-        <h3 class="font-bold text-gray-900">${title}</h3>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
-      </div>
-      <div class="p-6 overflow-y-auto flex-1">${body}</div>
-      <div class="px-6 py-4 border-t flex justify-end gap-3 shrink-0">
-        <button onclick="closeModal()" class="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
-        <button onclick="${saveFn}" class="px-4 py-2 text-sm bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg">${saveLbl}</button>
-      </div>
-    </div>
-  </div>`;
-}
+// Make functions available globally for onclick handlers
+window.render = render;
+window.logout = logout;
+window.closeModal = closeModal;
+window.openUpdateModal = openUpdateModal; window.saveUpdate = saveUpdate; window.togglePin = togglePin;
+window.openSchedModal = openSchedModal; window.saveSched = saveSched;
+window.openAartiModal = openAartiModal; window.saveAarti = saveAarti; window.moveAarti = moveAarti; window.toggleAarti = toggleAarti;
+window.markRead = markRead;
+window.openAlbumModal = openAlbumModal; window.saveAlbum = saveAlbum; window.delAlbum = delAlbum;
+window.uploadPhotos = uploadPhotos; window.delPhoto = delPhoto; window.selectAlbum = selectAlbum;
+window.delItem = delItem;
 
-function closeModal() {
-  const c=$('modalContainer'); if(c) c.innerHTML='';
-}
-
-async function deleteItem(collection, id) {
-  if(!confirm('Delete this item permanently?')) return;
-  await delDoc(collection, id);
-  toast('Deleted');
-  await loadPage(state.page);
-  renderCurrentPage();
-}
-
-function renderCurrentPage() {
-  if (state.loading) return;
-  const map = { dashboard:renderDashboard, updates:renderUpdates, schedule:renderSchedule,
-                aarti:renderAarti, feedback:renderFeedback, gallery:renderGallery };
-  map[state.page]?.();
-}
-
-const capitalize = s => s ? s.charAt(0).toUpperCase()+s.slice(1) : '';
-const safeJson = o => JSON.stringify(o).replace(/'/g,"\\'").replace(/"/g,"'");
-
-// Boot: auth state handled above — static login HTML already visible
-</script
+})(); // end IIFE
+</script>
+</body>
+</html>
