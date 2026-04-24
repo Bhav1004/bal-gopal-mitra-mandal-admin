@@ -4,17 +4,17 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Bal Gopal Mitra Mandal — Admin</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<!-- Self-hosted: no external CDN calls, works behind corporate firewalls -->
+<script src="/vendor/tailwind.js"></script>
 <script>
   tailwind.config = {
     theme: { extend: { colors: { mandal: { orange:'#E65100', amber:'#FF8F00', light:'#FFF5E1' } } } }
   }
 </script>
-<!-- Firebase SDK (modular via compat for CDN) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="/vendor/firebase-app.js"></script>
+<script src="/vendor/firebase-auth.js"></script>
+<script src="/vendor/firebase-firestore.js"></script>
+<script src="/vendor/firebase-storage.js"></script>
 <style>
   [x-cloak]{display:none!important}
   .fade{animation:fadeIn .2s ease}
