@@ -4,11 +4,6 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Bal Gopal Mitra Mandal — Admin</title>
-<!-- Firebase SDK — self-hosted, no external CDN -->
-<script src="/vendor/firebase-app.js"></script>
-<script src="/vendor/firebase-auth.js"></script>
-<script src="/vendor/firebase-firestore.js"></script>
-<script src="/vendor/firebase-storage.js"></script>
 <style>
 /* ── Reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -147,10 +142,44 @@ input:focus,textarea:focus,select:focus{outline:none;box-shadow:0 0 0 2px #fb923
 .input:focus{box-shadow:0 0 0 2px #fb923c;border-color:#fb923c}
 </style>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-900 antialiased">
+<body style="background:#f9fafb;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
 
-<!-- ═══════════════════════════════════════════════════════════════════════ APP -->
-<div id="app"></div>
+<!-- Static login form — visible immediately, no JS required to render -->
+<div id="app">
+  <div style="min-height:100vh;background:#fff7ed;display:flex;align-items:center;justify-content:center;padding:16px">
+    <div style="background:#fff;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,.1);width:100%;max-width:420px;padding:32px">
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="font-size:48px;margin-bottom:8px">🙏</div>
+        <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0">Bal Gopal Mitra Mandal</h1>
+        <p style="font-size:13px;color:#6b7280;margin:4px 0 0">Admin Panel &middot; Sign In</p>
+      </div>
+      <form id="loginForm">
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:4px">Email address</label>
+          <input id="loginEmail" type="email" required placeholder="admin@mandal.com" autocomplete="email"
+            style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 14px;font-size:14px;box-sizing:border-box;outline:none"/>
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:4px">Password</label>
+          <input id="loginPw" type="password" required placeholder="••••••••" autocomplete="current-password"
+            style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 14px;font-size:14px;box-sizing:border-box;outline:none"/>
+        </div>
+        <button type="submit" id="loginBtn"
+          style="width:100%;background:#ea580c;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer">
+          Sign In
+        </button>
+      </form>
+      <p id="loginError" style="color:#dc2626;font-size:13px;text-align:center;margin-top:12px;display:none"></p>
+      <p style="text-align:center;font-size:11px;color:#9ca3af;margin-top:20px">Admin access only &middot; Ganeshotsav 2026</p>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK loaded at bottom — does not block page rendering -->
+<script src="/vendor/firebase-app.js"></script>
+<script src="/vendor/firebase-auth.js"></script>
+<script src="/vendor/firebase-firestore.js"></script>
+<script src="/vendor/firebase-storage.js"></script>
 
 <script>
 // ─── Firebase config ──────────────────────────────────────────────────────────
@@ -780,12 +809,5 @@ function renderCurrentPage() {
 const capitalize = s => s ? s.charAt(0).toUpperCase()+s.slice(1) : '';
 const safeJson = o => JSON.stringify(o).replace(/'/g,"\\'").replace(/"/g,"'");
 
-/* Tailwind shorthand classes injected via style tag */
-document.head.insertAdjacentHTML('beforeend',`<style>
-  .label{display:block;font-size:.875rem;font-weight:500;color:#374151;margin-bottom:.25rem}
-  .input{width:100%;border:1px solid #D1D5DB;border-radius:.5rem;padding:.5rem .75rem;font-size:.875rem;outline:none;transition:box-shadow .15s}
-  .input:focus{box-shadow:0 0 0 2px #f97316}
-</style>`);
-
-// Boot: auth state handled above
+// Boot: auth state handled above — static login HTML already visible
 </script
