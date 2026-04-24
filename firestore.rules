@@ -35,5 +35,10 @@ service cloud.firestore {
       allow create: if true;           // app stores token on first launch
       allow read, update, delete: if request.auth != null;
     }
+
+    // ── Notification history: admin read/write only ───────────────────────────
+    match /notification_history/{doc} {
+      allow read, write: if request.auth != null;
+    }
   }
 }

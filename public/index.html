@@ -862,20 +862,28 @@ function sendNotif() {
         body:    JSON.stringify({ token: token, title: title, body: body })
       }).then(function(res) { return res.json(); })
         .then(function(json) {
-          // FCM v1 success returns { name: "projects/.../messages/..." }
-          return json.name ? 'ok' : 'fail';
+          // FCM v1 success: { name: "projects/.../messages/..." }
+          // FCM v1 error:   { error: { code, message, status } }
+          if (json.name) return { result: 'ok' };
+          var errMsg = (json.error && (json.error.message || json.error.status)) || JSON.stringify(json);
+          return { result: 'fail', reason: errMsg };
         })
-        .catch(function() { return 'fail'; });
+        .catch(function(e) { return { result: 'fail', reason: e.message }; });
     });
 
     return Promise.all(requests).then(function(results) {
-      var ok   = results.filter(function(r) { return r === 'ok'; }).length;
-      var fail = results.filter(function(r) { return r === 'fail'; }).length;
+      var ok      = results.filter(function(r) { return r.result === 'ok'; }).length;
+      var fails   = results.filter(function(r) { return r.result === 'fail'; });
+      var failReasons = fails.map(function(f) { return f.reason; }).filter(function(r,i,a) { return a.indexOf(r) === i; });
 
       if (btn) { btn.textContent = 'Send to All Devices'; btn.disabled = false; }
       if (status) {
-        status.textContent = '\u2705 Done! ' + ok + ' delivered' + (fail ? ', ' + fail + ' failed' : '') + ' out of ' + tokens.length + ' device(s).';
-        status.style.cssText = 'display:block;color:' + (fail === tokens.length ? '#dc2626' : '#16a34a') + ';font-weight:500';
+        var msg = ok > 0
+          ? '\u2705 Done! ' + ok + ' delivered' + (fails.length ? ', ' + fails.length + ' failed' : '') + ' out of ' + tokens.length + ' device(s).'
+          : '\u274C All ' + fails.length + ' failed. Reason: ' + (failReasons[0] || 'unknown');
+        if (fails.length && ok > 0) msg += ' Failure: ' + failReasons.join('; ');
+        status.textContent = msg;
+        status.style.cssText = 'display:block;color:' + (ok === 0 ? '#dc2626' : '#16a34a') + ';font-weight:500';
       }
 
       // 3. Log to Firestore history
