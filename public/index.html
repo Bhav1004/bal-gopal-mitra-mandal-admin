@@ -195,6 +195,7 @@ window.doLogin = function(e) {
 <script src="/vendor/firebase-auth.js"></script>
 <script src="/vendor/firebase-firestore.js"></script>
 <script src="/vendor/firebase-storage.js"></script>
+<script src="/vendor/firebase-functions.js"></script>
 
 <!-- ── Step 3: Main app — runs after Firebase is available ──────────────── -->
 <script>
@@ -202,7 +203,7 @@ window.doLogin = function(e) {
 'use strict';
 
 // ── Firebase init ─────────────────────────────────────────────────────────────
-var auth, db, storage;
+var auth, db, storage, functions;
 try {
   if (typeof firebase === 'undefined') throw new Error('firebase global not defined');
   var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp({
@@ -213,9 +214,10 @@ try {
     messagingSenderId: '204903030798',
     appId:             '1:204903030798:web:d6e58695643156ba3bdc5f'
   });
-  auth    = firebase.auth(app);
-  db      = firebase.firestore(app);
-  storage = firebase.storage(app);
+  auth      = firebase.auth(app);
+  db        = firebase.firestore(app);
+  storage   = firebase.storage(app);
+  functions = firebase.functions(app);
   window._fbAuth = auth;  // expose to doLogin()
 } catch(err) {
   var e = document.getElementById('loginError');
@@ -294,12 +296,13 @@ function renderLogin() {
 
 function sidebar() {
   var nav = [
-    ['dashboard', '\uD83D\uDCCA', 'Dashboard'],
-    ['updates',   '\uD83D\uDCE2', 'Updates'],
-    ['schedule',  '\uD83D\uDCC5', 'Schedule'],
-    ['aarti',     '\uD83D\uDE4F', 'Aarti'],
-    ['gallery',   '\uD83D\uDDBC\uFE0F', 'Gallery'],
-    ['feedback',  '\uD83D\uDCAC', 'Feedback']
+    ['dashboard',     '\uD83D\uDCCA', 'Dashboard'],
+    ['updates',       '\uD83D\uDCE2', 'Updates'],
+    ['schedule',      '\uD83D\uDCC5', 'Schedule'],
+    ['aarti',         '\uD83D\uDE4F', 'Aarti'],
+    ['gallery',       '\uD83D\uDDBC\uFE0F', 'Gallery'],
+    ['feedback',      '\uD83D\uDCAC', 'Feedback'],
+    ['notifications', '\uD83D\uDD14', 'Notifications']
   ];
   var links = nav.map(function(n) {
     var active = state.page === n[0];
@@ -360,6 +363,14 @@ function loadAndRender(page) {
   else if (page === 'gallery')    {
     load = col('gallery').orderBy('year', 'desc').get()
       .then(function(s) { state.albums = s.docs.map(function(d) { var o = d.data(); o.id = d.id; return o; }); });
+  } else if (page === 'notifications') {
+    load = Promise.all([
+      col('device_tokens').get(),
+      col('notification_history').orderBy('sentAt', 'desc').limit(20).get()
+    ]).then(function(r) {
+      state.data.deviceCount = r[0].size;
+      state.data.notifHistory = r[1].docs.map(function(d) { var o = d.data(); o.id = d.id; return o; });
+    });
   } else { load = Promise.resolve(); }
 
   load.catch(function(e) { toast('Load error: ' + e.message, false); })
@@ -372,7 +383,8 @@ function loadAndRender(page) {
 function renderPage(page) {
   var pages = {
     dashboard: renderDashboard, updates: renderUpdates, schedule: renderSchedule,
-    aarti: renderAarti, feedback: renderFeedback, gallery: renderGallery
+    aarti: renderAarti, feedback: renderFeedback, gallery: renderGallery,
+    notifications: renderNotifications
   };
   if (pages[page]) pages[page]();
 }
@@ -758,6 +770,96 @@ function delPhoto(idx) {
   });
 }
 
+// ── Notifications ─────────────────────────────────────────────────────────────
+function renderNotifications() {
+  var deviceCount = state.data.deviceCount || 0;
+  var history     = state.data.notifHistory || [];
+
+  var histRows = history.length ? history.map(function(n) {
+    var t = n.sentAt && n.sentAt.toDate ? n.sentAt.toDate() : new Date();
+    return '<div class="card p4" style="margin-bottom:10px">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">' +
+        '<div>' +
+          '<p style="font-weight:600;font-size:14px;color:#111;margin-bottom:3px">' + esc(n.title || '') + '</p>' +
+          '<p style="font-size:13px;color:#4b5563;margin-bottom:6px">' + esc(n.body || '') + '</p>' +
+          '<p style="font-size:11px;color:#9ca3af">' +
+            t.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) +
+            ' &nbsp;&middot;&nbsp; Sent by ' + esc(n.sentBy || 'admin') +
+          '</p>' +
+        '</div>' +
+        '<div style="text-align:right;flex-shrink:0">' +
+          '<p style="font-size:13px;font-weight:600;color:#16a34a">\u2713 ' + (n.successCount || 0) + ' delivered</p>' +
+          (n.failureCount ? '<p style="font-size:11px;color:#ef4444">' + n.failureCount + ' failed</p>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') : emptyState('No notifications sent yet.');
+
+  setMain(
+    pageHeader('Notifications', '\uD83D\uDD14 Broadcast to all residents') +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">' +
+      '<div class="card p5">' +
+        '<p style="font-size:13px;color:#6b7280;font-weight:500;margin-bottom:8px">\uD83D\uDCF1 Registered Devices</p>' +
+        '<p style="font-size:32px;font-weight:700;color:#111">' + deviceCount + '</p>' +
+        '<p style="font-size:12px;color:#9ca3af;margin-top:4px">Devices that have opened the app</p>' +
+      '</div>' +
+      '<div class="card p5">' +
+        '<p style="font-size:13px;color:#6b7280;font-weight:500;margin-bottom:8px">\uD83D\uDCA4 Quiet Hours</p>' +
+        '<p style="font-size:15px;font-weight:600;color:#111">10 PM \u2013 7 AM</p>' +
+        '<p style="font-size:12px;color:#9ca3af;margin-top:4px">Notifications blocked during this window</p>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="card p5" style="margin-bottom:24px">' +
+      '<h3 style="font-weight:600;font-size:15px;color:#111;margin-bottom:16px">Send Notification</h3>' +
+      fld('Title *', '<input id="nTitle" class="inp" placeholder="e.g. Aarti in 30 mins \uD83D\uDE4F" maxlength="60"/>') +
+      fld('Body *', '<textarea id="nBody" class="inp" rows="3" placeholder="Evening aarti begins at 7:30 PM. All residents welcome!" maxlength="200"></textarea>') +
+      '<div style="display:flex;align-items:center;gap:12px">' +
+        '<button class="btn btn-primary" onclick="sendNotif()" id="sendBtn">Send to All Devices</button>' +
+        '<p style="font-size:12px;color:#9ca3af">Will be sent to all ' + deviceCount + ' registered device(s)</p>' +
+      '</div>' +
+      '<p id="notifStatus" style="margin-top:12px;font-size:13px;display:none"></p>' +
+    '</div>' +
+
+    '<h3 style="font-weight:600;font-size:15px;color:#111;margin-bottom:12px">Recent History</h3>' +
+    histRows
+  );
+}
+
+function sendNotif() {
+  var title  = $('nTitle') ? $('nTitle').value.trim() : '';
+  var body   = $('nBody')  ? $('nBody').value.trim()  : '';
+  var status = $('notifStatus');
+  var btn    = $('sendBtn');
+
+  if (!title || !body) { toast('Title and body required', false); return; }
+  if (!functions) { toast('Firebase Functions not loaded', false); return; }
+
+  if (btn) { btn.textContent = 'Sending\u2026'; btn.disabled = true; }
+  if (status) { status.style.display = 'none'; }
+
+  var sendFn = functions.httpsCallable('sendNotification');
+  sendFn({ title: title, body: body })
+    .then(function(result) {
+      var r = result.data;
+      if (btn) { btn.textContent = 'Send to All Devices'; btn.disabled = false; }
+      if (status) {
+        status.textContent = '\u2705 Sent! ' + r.successCount + ' delivered, ' + r.failureCount + ' failed out of ' + r.totalDevices + ' devices.';
+        status.style.cssText = 'display:block;color:#16a34a;font-weight:500';
+      }
+      if ($('nTitle')) $('nTitle').value = '';
+      if ($('nBody'))  $('nBody').value  = '';
+      loadAndRender('notifications');
+    })
+    .catch(function(err) {
+      if (btn) { btn.textContent = 'Send to All Devices'; btn.disabled = false; }
+      if (status) {
+        status.textContent = '\u26A0\uFE0F ' + (err.message || err.code || 'Send failed');
+        status.style.cssText = 'display:block;color:#dc2626';
+      }
+    });
+}
+
 // ── Shared helpers ────────────────────────────────────────────────────────────
 function fld(label, input) {
   return '<div style="margin-bottom:14px"><label class="lbl">' + label + '</label>' + input + '</div>';
@@ -801,6 +903,7 @@ window.markRead = markRead;
 window.openAlbumModal = openAlbumModal; window.saveAlbum = saveAlbum; window.delAlbum = delAlbum;
 window.uploadPhotos = uploadPhotos; window.delPhoto = delPhoto; window.selectAlbum = selectAlbum;
 window.delItem = delItem;
+window.sendNotif = sendNotif;
 
 })(); // end IIFE
 </script>
