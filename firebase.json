@@ -4,12 +4,6 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       { "source": "**", "destination": "/index.html" }
-    ],
-    "headers": [
-      {
-        "source": "**/*.@(js|css|woff2|png|jpg|svg)",
-        "headers": [{ "key": "Cache-Control", "value": "max-age=31536000" }]
-      }
     ]
   },
   "firestore": {

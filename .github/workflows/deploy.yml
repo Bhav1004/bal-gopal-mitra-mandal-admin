@@ -1,0 +1,27 @@
+name: Deploy Admin Panel to Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main          # deploy on every push to main
+  workflow_dispatch:  # allow manual trigger from GitHub Actions tab
+
+jobs:
+  deploy:
+    name: Deploy to Firebase Hosting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # No build step needed — public/index.html is already production-ready
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken:          ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId:          bal-gopal-mitra-mandal
+          channelId:          live        # deploy to live channel (not preview)
+          target:             bal-gopal-mitra-mandal   # matches firebase.json hosting target
