@@ -100,12 +100,13 @@ async function loadPage(page) {
   state.loading = true; renderShell(page);
   try {
     if (page==='dashboard') {
+      const safe = p => p.catch(() => ({ size:0, docs:[] }));
       const [u,a,f,t] = await Promise.all([
-        col('updates').get(), col('aartis').get(),
-        col('feedback').get(), col('device_tokens').get()
+        safe(col('updates').get()), safe(col('aartis').get()),
+        safe(col('feedback').get()), safe(col('device_tokens').get())
       ]);
-      const unread = f.docs.filter(d=>!d.data().isRead).length;
-      state.data = { updates:u.size, aartis:a.size, feedback:f.size, unread, devices:t.size };
+      const unread = (f.docs||[]).filter(d=>!d.data().isRead).length;
+      state.data = { updates:u.size||0, aartis:a.size||0, feedback:f.size||0, unread, devices:t.size||0 };
     } else if (page==='updates')  { state.data.list = await getAll('updates'); }
     else if (page==='schedule')   { state.data.list = await getAll('schedule','dayNumber','asc'); }
     else if (page==='aarti')      { state.data.list = await getAll('aartis','order','asc'); }
@@ -115,7 +116,7 @@ async function loadPage(page) {
       state.albums = snap.docs.map(d=>({id:d.id,...d.data()}));
     }
   } catch(e) { toast('Failed to load data: '+e.message, false); }
-  state.loading = false; renderShell(page);
+  state.loading = false; renderShell(page); renderCurrentPage();
 }
 
 // ─── Render engine ────────────────────────────────────────────────────────────
@@ -660,6 +661,4 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 </style>`);
 
 // Boot: auth state handled above
-</script>
-</body>
-</html>
+</script
