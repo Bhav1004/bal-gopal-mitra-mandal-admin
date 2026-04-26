@@ -442,8 +442,8 @@ function renderUpdates() {
           '<span class="badge ' + (TAG_COLORS[u.tag] || 'badge-notice') + '">' + cap(u.tag || 'notice') + '</span>' +
           '<span style="font-size:11px;color:#9ca3af">' + fmt(u.timestamp) + '</span>' +
         '</div>' +
-        '<p style="font-weight:600;color:#111;font-size:14px;margin-bottom:3px">' + (u.title || '') + '</p>' +
-        '<p style="font-size:13px;color:#4b5563;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">' + (u.body || '') + '</p>' +
+        '<p style="font-weight:600;color:#111;font-size:14px;margin-bottom:3px">' + (u.title_en || u.title || '') + (u.title_mr ? ' <span style="font-size:12px;color:#9ca3af;font-weight:400">/ ' + u.title_mr + '</span>' : '') + '</p>' +
+        '<p style="font-size:13px;color:#4b5563;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">' + (u.body_en || u.body || '') + '</p>' +
       '</div>' +
       '<div style="display:flex;gap:6px;flex-shrink:0">' +
         '<button class="btn btn-ghost btn-sm" onclick="togglePin(\'' + u.id + '\',' + u.isPinned + ')">' + (u.isPinned ? 'Unpin' : 'Pin') + '</button>' +
@@ -466,9 +466,22 @@ function togglePin(id, cur) {
 function openUpdateModal(u) {
   var tags = ['puja','event','notice','traffic','emergency'];
   var opts = tags.map(function(t) { return '<option value="' + t + '"' + (u && u.tag === t ? ' selected' : '') + '>' + cap(t) + '</option>'; }).join('');
+  // Support both old schema (title/body) and new bilingual schema (title_en/title_mr etc.)
+  var titleEn = u ? (u.title_en || u.title || '') : '';
+  var titleMr = u ? (u.title_mr || '') : '';
+  var bodyEn  = u ? (u.body_en  || u.body  || '') : '';
+  var bodyMr  = u ? (u.body_mr  || '') : '';
   showModal(u ? 'Edit Update' : 'New Update',
-    fld('Title *', '<input id="mTitle" class="inp" placeholder="e.g. Aarti timing update" value="' + esc(u && u.title || '') + '"/>') +
-    fld('Body *', '<textarea id="mBody" class="inp" rows="4" placeholder="Announcement text\u2026">' + esc(u && u.body || '') + '</textarea>') +
+    '<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#92400e">🌐 Enter content in <strong>both languages</strong>. If Marathi is left blank, the app will show English as fallback.</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px"><span style="font-size:12px;font-weight:600;color:#374151">🇬🇧 English</span><span style="font-size:12px;font-weight:600;color:#374151">🇮🇳 मराठी</span></div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' +
+      fld('Title (English) *', '<input id="mTitleEn" class="inp" placeholder="e.g. Aarti timing update" value="' + esc(titleEn) + '"/>') +
+      fld('शीर्षक (मराठी)', '<input id="mTitleMr" class="inp" placeholder="उदा. आरती वेळ अपडेट" value="' + esc(titleMr) + '"/>') +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' +
+      fld('Body (English) *', '<textarea id="mBodyEn" class="inp" rows="4" placeholder="Announcement text\u2026">' + esc(bodyEn) + '</textarea>') +
+      fld('मजकूर (मराठी)', '<textarea id="mBodyMr" class="inp" rows="4" placeholder="घोषणेचा मजकूर\u2026">' + esc(bodyMr) + '</textarea>') +
+    '</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
       fld('Tag', '<select id="mTag" class="sel">' + opts + '</select>') +
       '<div style="display:flex;align-items:flex-end;padding-bottom:4px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mPin"' + (u && u.isPinned ? ' checked' : '') + ' style="width:15px;height:15px;accent-color:#ea580c"/> Pin to top</label></div>' +
@@ -479,11 +492,13 @@ function openUpdateModal(u) {
 }
 
 function saveUpdate(id) {
-  var title = $('mTitle').value.trim(), body = $('mBody').value.trim();
+  var titleEn = $('mTitleEn').value.trim(), bodyEn = $('mBodyEn').value.trim();
+  var titleMr = $('mTitleMr').value.trim(), bodyMr = $('mBodyMr').value.trim();
   var tag = $('mTag').value, isPinned = $('mPin').checked;
-  if (!title || !body) { toast('Title and body required', false); return; }
-  var p = id ? setFsDoc('updates', id, {title:title, body:body, tag:tag, isPinned:isPinned})
-             : addFsDoc('updates', {title:title, body:body, tag:tag, isPinned:isPinned, timestamp:Date.now()});
+  if (!titleEn || !bodyEn) { toast('English title and body are required', false); return; }
+  var data = {title_en:titleEn, title_mr:titleMr, body_en:bodyEn, body_mr:bodyMr, tag:tag, isPinned:isPinned};
+  var p = id ? setFsDoc('updates', id, data)
+             : addFsDoc('updates', Object.assign(data, {timestamp:Date.now()}));
   p.then(function() { toast(id ? 'Update saved' : 'Update posted!'); closeModal(); loadAndRender('updates'); })
    .catch(function(e) { toast('Save failed: ' + e.message, false); });
 }
@@ -527,7 +542,10 @@ function openSchedModal(d) {
       fld('Day #', '<input id="sDayNum" class="inp" type="number" min="1" max="10" value="' + (d ? d.dayNumber : 1) + '"/>') +
       fld('Date', '<input id="sDate" class="inp" placeholder="22 Aug" value="' + esc(d ? d.date : '') + '"/>') +
     '</div>' +
-    fld('Day Name', '<input id="sDayName" class="inp" placeholder="Day 1 \u2014 Ganesh Sthapana" value="' + esc(d ? d.dayName : '') + '"/>') +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px">' +
+      fld('Day Name (English)', '<input id="sDayName" class="inp" placeholder="Day 1 \u2014 Ganesh Sthapana" value="' + esc(d ? (d.dayName_en || d.dayName || '') : '') + '"/>') +
+      fld('दिवसाचे नाव (मराठी)', '<input id="sDayNameMr" class="inp" placeholder="\u0926\u093f\u0935\u0938 \u0967 \u2014 \u0917\u0923\u0947\u0936 \u0938\u094d\u0925\u093e\u092a\u0928\u093e" value="' + esc(d ? (d.dayName_mr || '') : '') + '"/>') +
+    '</div>' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 6px">' +
       '<label style="font-size:13px;font-weight:500;color:#374151">Events</label>' +
       '<button type="button" class="btn btn-ghost btn-sm" onclick="addEvRow()" style="font-size:12px">+ Add event</button>' +
@@ -551,14 +569,15 @@ window.addEvRow = function() {
 };
 
 function saveSched(id) {
-  var dayNumber = parseInt($('sDayNum').value), date = $('sDate').value.trim(), dayName = $('sDayName').value.trim();
-  if (!dayName || !date) { toast('Day name and date required', false); return; }
+  var dayNumber = parseInt($('sDayNum').value), date = $('sDate').value.trim();
+  var dayNameEn = $('sDayName').value.trim(), dayNameMr = $('sDayNameMr').value.trim();
+  if (!dayNameEn || !date) { toast('Day name (English) and date required', false); return; }
   var rows = document.querySelectorAll('#evContainer .ev-row');
   var events = Array.from(rows).map(function(r) {
     return { time: r.querySelector('.ev-time').value.trim(), name: r.querySelector('.ev-name').value.trim(), notes: r.querySelector('.ev-note').value.trim() };
   }).filter(function(e) { return e.name; });
-  var p = id ? setFsDoc('schedule', id, {dayNumber:dayNumber, date:date, dayName:dayName, events:events})
-             : addFsDoc('schedule', {dayNumber:dayNumber, date:date, dayName:dayName, events:events});
+  var data = {dayNumber:dayNumber, date:date, dayName_en:dayNameEn, dayName_mr:dayNameMr, events:events};
+  var p = id ? setFsDoc('schedule', id, data) : addFsDoc('schedule', data);
   p.then(function() { toast('Schedule saved'); closeModal(); loadAndRender('schedule'); })
    .catch(function(e) { toast('Save failed: ' + e.message, false); });
 }
