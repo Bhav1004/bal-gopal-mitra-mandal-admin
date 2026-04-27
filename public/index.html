@@ -1145,29 +1145,83 @@ function delItem(coll, id) {
 // Make functions available globally for onclick handlers
 // ── Settings ──────────────────────────────────────────────────────────────────
 function renderSettings() {
-  db.doc('config/festival').get().then(function(doc) {
-    var d = doc.exists ? doc.data() : {};
+  Promise.all([
+    db.doc('config/festival').get().catch(function() { return {exists:false, data:function(){return {};}}; }),
+    db.doc('config/app').get().catch(function() { return {exists:false, data:function(){return {};}}; }),
+    db.doc('config/daily_quote').get().catch(function() { return {exists:false, data:function(){return {};}}; })
+  ]).then(function(results) {
+    var f = results[0].exists ? results[0].data() : {};
+    var a = results[1].exists ? results[1].data() : {};
+    var q = results[2].exists ? results[2].data() : {};
+
     setMain(
       pageHeader('Settings', '\u2699\uFE0F App configuration') +
-      '<div class="card p5" style="margin-bottom:20px">' +
-        '<h3 style="font-size:15px;font-weight:600;color:#111;margin-bottom:4px">\uD83C\uDF89 Festival Configuration</h3>' +
-        '<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Controls the countdown timer, festival day badge, and "Today" highlighting in the schedule. Saves to <code>config/festival</code>.</p>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">' +
-          fld('Festival Name', '<input id="fName" class="inp" value="' + esc(d.name || 'Ganeshotsav 2026') + '" placeholder="Ganeshotsav 2026"/>') +
-          fld('Start Year', '<input id="fYear" class="inp" type="number" value="' + (d.startYear || 2026) + '"/>') +
-          fld('Total Days', '<input id="fDays" class="inp" type="number" value="' + (d.totalDays || 10) + '" min="1" max="20"/>') +
+
+      // ── Branding ──────────────────────────────────────────────────────────
+      '<div class="card p5" style="margin-bottom:16px">' +
+        '<h3 style="font-size:15px;font-weight:600;color:#111;margin-bottom:4px">\uD83C\uDFAF App Branding</h3>' +
+        '<p style="font-size:12px;color:#6b7280;margin-bottom:14px">Logo URL and app title shown in the header. Use ImgBB or any public image URL. Saves to <code>config/app</code>.</p>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">' +
+          fld('App Title', '<input id="aTitle" class="inp" value="' + esc(a.appTitle || 'Bal Gopal Mitra Mandal') + '"/>') +
+          fld('Logo Image URL', '<input id="aLogo" class="inp" placeholder="https://i.ibb.co/..." value="' + esc(a.logoUrl || '') + '"/>') +
         '</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">' +
-          fld('Start Month (1=Jan … 8=Aug)', '<input id="fMonth" class="inp" type="number" min="1" max="12" value="' + (d.startMonth || 8) + '"/>') +
-          fld('Start Day', '<input id="fDay" class="inp" type="number" min="1" max="31" value="' + (d.startDay || 22) + '"/>') +
+        (a.logoUrl ? '<img src="' + esc(a.logoUrl) + '" style="height:60px;border-radius:8px;margin-bottom:12px"/>' : '') +
+        '<button class="btn btn-primary" onclick="saveBranding()">Save Branding</button>' +
+      '</div>' +
+
+      // ── Festival ──────────────────────────────────────────────────────────
+      '<div class="card p5" style="margin-bottom:16px">' +
+        '<h3 style="font-size:15px;font-weight:600;color:#111;margin-bottom:4px">\uD83C\uDF89 Festival Configuration</h3>' +
+        '<p style="font-size:12px;color:#6b7280;margin-bottom:14px">Controls the countdown timer, festival day badge, and schedule highlighting. Saves to <code>config/festival</code>.</p>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">' +
+          fld('Festival Name', '<input id="fName" class="inp" value="' + esc(f.name || 'Ganeshotsav 2026') + '"/>') +
+          fld('Start Year', '<input id="fYear" class="inp" type="number" value="' + (f.startYear || 2026) + '"/>') +
+          fld('Total Days', '<input id="fDays" class="inp" type="number" value="' + (f.totalDays || 10) + '" min="1" max="20"/>') +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">' +
+          fld('Start Month (1–12)', '<input id="fMonth" class="inp" type="number" min="1" max="12" value="' + (f.startMonth || 8) + '"/>') +
+          fld('Start Day', '<input id="fDay" class="inp" type="number" min="1" max="31" value="' + (f.startDay || 22) + '"/>') +
+          fld('Start Hour (0–23)', '<input id="fHour" class="inp" type="number" min="0" max="23" value="' + (f.startHour !== undefined ? f.startHour : 6) + '"/>') +
         '</div>' +
         '<button class="btn btn-primary" onclick="saveFestivalConfig()">Save Festival Config</button>' +
+      '</div>' +
+
+      // ── Daily Quote ───────────────────────────────────────────────────────
+      '<div class="card p5" style="margin-bottom:16px">' +
+        '<h3 style="font-size:15px;font-weight:600;color:#111;margin-bottom:4px">\uD83E\uDE94 Daily Blessing / Quote</h3>' +
+        '<p style="font-size:12px;color:#6b7280;margin-bottom:14px">Shown as a small card at the top of the Updates tab. Saves to <code>config/daily_quote</code>.</p>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' +
+          fld('Quote (English)', '<textarea id="qEn" class="inp" rows="2">' + esc(q.quote_en || '') + '</textarea>') +
+          fld('Quote (Marathi)', '<textarea id="qMr" class="inp" rows="2">' + esc(q.quote_mr || '') + '</textarea>') +
+        '</div>' +
+        fld('Source / Author', '<input id="qAuthor" class="inp" value="' + esc(q.author || '') + '" placeholder="e.g. Atharvashirsha"/>') +
+        '<button class="btn btn-primary" onclick="saveQuote()">Save Quote</button>' +
       '</div>'
     );
-  }).catch(function() {
-    toast('Could not load config — check Firestore rules for config collection', false);
+  }).catch(function(e) {
+    toast('Could not load settings: ' + e.message, false);
   });
 }
+
+function saveBranding() {
+  db.doc('config/app').set({
+    appTitle: $('aTitle').value.trim(),
+    logoUrl:  $('aLogo').value.trim()
+  }, {merge: true})
+  .then(function() { toast('Branding saved! Restart the app to see changes.'); renderSettings(); })
+  .catch(function(e) { toast('Save failed: ' + e.message, false); });
+}
+
+function saveQuote() {
+  db.doc('config/daily_quote').set({
+    quote_en: $('qEn').value.trim(),
+    quote_mr: $('qMr').value.trim(),
+    author:   $('qAuthor').value.trim()
+  })
+  .then(function() { toast('Daily quote saved! \uD83E\uDE94'); })
+  .catch(function(e) { toast('Save failed: ' + e.message, false); });
+}
+window.saveBranding = saveBranding; window.saveQuote = saveQuote;
 
 function saveFestivalConfig() {
   var data = {
@@ -1175,6 +1229,7 @@ function saveFestivalConfig() {
     startYear:  parseInt($('fYear').value),
     startMonth: parseInt($('fMonth').value),
     startDay:   parseInt($('fDay').value),
+    startHour:  parseInt($('fHour').value),
     totalDays:  parseInt($('fDays').value)
   };
   db.doc('config/festival').set(data)
