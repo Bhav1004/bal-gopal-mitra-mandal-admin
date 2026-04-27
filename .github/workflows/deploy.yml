@@ -7,10 +7,6 @@ on:
       - master
   workflow_dispatch:
 
-env:
-  # Use Node.js 24 for all actions (avoids Node 20 deprecation warnings)
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   deploy:
     name: Deploy to Firebase
