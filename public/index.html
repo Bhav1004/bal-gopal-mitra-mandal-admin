@@ -791,8 +791,8 @@ function uploadPhotos(files) {
     toast('Select or create an album first, then upload photos.', false);
     return;
   }
-  if (!IMGBB_API_KEY || IMGBB_API_KEY === '97c2626cc542c4d8a3d886add65e775e') {
-    toast('Paste your ImgBB API key into the IMGBB_API_KEY variabl in index.html first.', false);
+  if (!IMGBB_API_KEY || IMGBB_API_KEY.length < 8) {
+    toast('ImgBB API key is missing or too short. Check the IMGBB_API_KEY value in index.html.', false);
     return;
   }
 
@@ -1154,6 +1154,3 @@ window.delItem = delItem;
 window.sendNotif = sendNotif;
 
 })(); // end IIFE
-</script>
-</body>
-</html>
