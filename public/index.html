@@ -300,7 +300,8 @@ function sidebar() {
     ['aarti',         '\uD83D\uDE4F', 'Aarti'],
     ['gallery',       '\uD83D\uDDBC\uFE0F', 'Gallery'],
     ['feedback',      '\uD83D\uDCAC', 'Feedback'],
-    ['notifications', '\uD83D\uDD14', 'Notifications']
+    ['notifications', '\uD83D\uDD14', 'Notifications'],
+    ['settings',      '\u2699\uFE0F',  'Settings']
   ];
   var links = nav.map(function(n) {
     var active = state.page === n[0];
@@ -382,7 +383,8 @@ function renderPage(page) {
   var pages = {
     dashboard: renderDashboard, updates: renderUpdates, schedule: renderSchedule,
     aarti: renderAarti, feedback: renderFeedback, gallery: renderGallery,
-    notifications: renderNotifications
+    notifications: renderNotifications,
+    settings: renderSettings
   };
   if (pages[page]) pages[page]();
 }
@@ -1141,6 +1143,46 @@ function delItem(coll, id) {
 }
 
 // Make functions available globally for onclick handlers
+// ── Settings ──────────────────────────────────────────────────────────────────
+function renderSettings() {
+  db.doc('config/festival').get().then(function(doc) {
+    var d = doc.exists ? doc.data() : {};
+    setMain(
+      pageHeader('Settings', '\u2699\uFE0F App configuration') +
+      '<div class="card p5" style="margin-bottom:20px">' +
+        '<h3 style="font-size:15px;font-weight:600;color:#111;margin-bottom:4px">\uD83C\uDF89 Festival Configuration</h3>' +
+        '<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Controls the countdown timer, festival day badge, and "Today" highlighting in the schedule. Saves to <code>config/festival</code>.</p>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">' +
+          fld('Festival Name', '<input id="fName" class="inp" value="' + esc(d.name || 'Ganeshotsav 2026') + '" placeholder="Ganeshotsav 2026"/>') +
+          fld('Start Year', '<input id="fYear" class="inp" type="number" value="' + (d.startYear || 2026) + '"/>') +
+          fld('Total Days', '<input id="fDays" class="inp" type="number" value="' + (d.totalDays || 10) + '" min="1" max="20"/>') +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">' +
+          fld('Start Month (1=Jan … 8=Aug)', '<input id="fMonth" class="inp" type="number" min="1" max="12" value="' + (d.startMonth || 8) + '"/>') +
+          fld('Start Day', '<input id="fDay" class="inp" type="number" min="1" max="31" value="' + (d.startDay || 22) + '"/>') +
+        '</div>' +
+        '<button class="btn btn-primary" onclick="saveFestivalConfig()">Save Festival Config</button>' +
+      '</div>'
+    );
+  }).catch(function() {
+    toast('Could not load config — check Firestore rules for config collection', false);
+  });
+}
+
+function saveFestivalConfig() {
+  var data = {
+    name:       $('fName').value.trim(),
+    startYear:  parseInt($('fYear').value),
+    startMonth: parseInt($('fMonth').value),
+    startDay:   parseInt($('fDay').value),
+    totalDays:  parseInt($('fDays').value)
+  };
+  db.doc('config/festival').set(data)
+    .then(function() { toast('\uD83C\uDF89 Festival config saved! App will reflect changes on next launch.'); })
+    .catch(function(e) { toast('Save failed: ' + e.message, false); });
+}
+window.saveFestivalConfig = saveFestivalConfig;
+
 window.render = render;
 window.logout = logout;
 window.closeModal = closeModal;
