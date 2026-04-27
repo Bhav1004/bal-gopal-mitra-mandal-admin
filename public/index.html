@@ -910,40 +910,63 @@ function renderNotifications() {
 
 // ── Scheduled Reminders ───────────────────────────────────────────────────────
 function loadReminders() {
-  db.doc('config/notifications').get().then(function(doc) {
-    var reminders = (doc.exists && doc.data().reminders) ? doc.data().reminders : [];
-    var el = document.getElementById('reminderList');
-    if (!el) return;
-    if (!reminders.length) { el.innerHTML = '<p style="font-size:13px;color:#9ca3af">No reminders configured. Add one above.</p>'; return; }
-    el.innerHTML = reminders.map(function(r, i) {
-      return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6">' +
-        '<span style="font-size:20px;min-width:28px">' + (r.enabled ? '🔔' : '🔕') + '</span>' +
-        '<div style="flex:1">' +
-          '<p style="font-weight:600;font-size:13px;color:#111">' + esc(r.label || r.title) + '</p>' +
-          '<p style="font-size:12px;color:#6b7280">' + (r.hour || 0).toString().padStart(2,'0') + ':' + (r.minute || 0).toString().padStart(2,'0') + ' — ' + esc(r.body || '') + '</p>' +
-        '</div>' +
-        '<button class="btn btn-ghost btn-sm" onclick="openReminderModal(' + i + ')">Edit</button>' +
-        '<button class="btn btn-danger btn-sm" onclick="deleteReminder(' + i + ')">Delete</button>' +
-      '</div>';
-    }).join('');
-  });
+  db.doc('config/notifications').get()
+    .then(function(doc) {
+      var reminders = (doc.exists && doc.data() && doc.data().reminders) ? doc.data().reminders : [];
+      var el = document.getElementById('reminderList');
+      if (!el) return;
+      if (!reminders.length) {
+        el.innerHTML = '<p style="font-size:13px;color:#9ca3af">No reminders configured yet. Click "+ Add Reminder" to create one.</p>';
+        return;
+      }
+      el.innerHTML = reminders.map(function(r, i) {
+        var hh = (r.hour || 0).toString().padStart(2,'0');
+        var mm = (r.minute || 0).toString().padStart(2,'0');
+        return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6">' +
+          '<span style="font-size:20px;min-width:28px">' + (r.enabled !== false ? '🔔' : '🔕') + '</span>' +
+          '<div style="flex:1;min-width:0">' +
+            '<p style="font-weight:600;font-size:13px;color:#111">' + esc(r.label || r.title || 'Reminder') + '</p>' +
+            '<p style="font-size:12px;color:#6b7280">' + hh + ':' + mm + ' — ' + esc(r.body || '') + '</p>' +
+          '</div>' +
+          '<button class="btn btn-ghost btn-sm" onclick="openReminderModal(' + i + ')">Edit</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteReminder(' + i + ')">Delete</button>' +
+        '</div>';
+      }).join('');
+    })
+    .catch(function(e) {
+      var el = document.getElementById('reminderList');
+      if (el) el.innerHTML = '<p style="font-size:13px;color:#dc2626">Permission denied. Update Firestore rules to allow read on <code>config</code> collection, then redeploy.</p>';
+    });
+}
+
+function showReminderForm(r, idx) {
+  var hVal = r ? r.hour.toString().padStart(2,'0') + ':' + (r.minute||0).toString().padStart(2,'0') : '07:00';
+  showModal(r ? 'Edit Reminder' : 'New Reminder',
+    fld('Label', '<input id="rLabel" class="inp" value="' + esc(r ? r.label : '') + '" placeholder="e.g. Morning Aarti"/>') +
+    fld('Time', '<input type="time" id="rTime" class="inp" value="' + hVal + '" style="max-width:160px"/>') +
+    fld('Notification Title', '<input id="rTitle" class="inp" value="' + esc(r ? r.title : '') + '" placeholder="e.g. \uD83D\uDD6F\uFE0F Morning Aarti"/>') +
+    fld('Notification Body', '<textarea id="rBody" class="inp" rows="2">' + esc(r ? r.body : '') + '</textarea>') +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px;cursor:pointer"><input type="checkbox" id="rEnabled"' + (!r || r.enabled !== false ? ' checked' : '') + ' style="width:15px;height:15px;accent-color:#ea580c"/> Enabled</label>',
+    'saveReminder(' + (idx !== null && idx >= 0 ? idx : -1) + ')',
+    r ? 'Save Changes' : 'Add Reminder'
+  );
 }
 
 function openReminderModal(idx) {
-  db.doc('config/notifications').get().then(function(doc) {
-    var reminders = (doc.exists && doc.data().reminders) ? doc.data().reminders : [];
-    var r = idx !== null ? reminders[idx] : null;
-    var hVal = r ? r.hour.toString().padStart(2,'0') + ':' + r.minute.toString().padStart(2,'0') : '07:00';
-    showModal(r ? 'Edit Reminder' : 'New Reminder',
-      fld('Label', '<input id="rLabel" class="inp" value="' + esc(r ? r.label : '') + '" placeholder="e.g. Morning Aarti"/>') +
-      fld('Time', '<input type="time" id="rTime" class="inp" value="' + hVal + '" style="max-width:160px"/>') +
-      fld('Notification Title', '<input id="rTitle" class="inp" value="' + esc(r ? r.title : '') + '" placeholder="🕯️ Morning Aarti"/>') +
-      fld('Notification Body', '<textarea id="rBody" class="inp" rows="2">' + esc(r ? r.body : '') + '</textarea>') +
-      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px;cursor:pointer"><input type="checkbox" id="rEnabled"' + (r && r.enabled !== false ? ' checked' : r ? '' : ' checked') + ' style="width:15px;height:15px;accent-color:#ea580c"/> Enabled</label>',
-      'saveReminder(' + (idx !== null ? idx : -1) + ')',
-      r ? 'Save' : 'Add Reminder'
-    );
-  });
+  if (idx === null) {
+    // New reminder — open immediately, no Firestore read needed
+    showReminderForm(null, -1);
+    return;
+  }
+  // Edit existing — fetch current config to populate form
+  db.doc('config/notifications').get()
+    .then(function(doc) {
+      var reminders = (doc.exists && doc.data() && doc.data().reminders) ? doc.data().reminders : [];
+      showReminderForm(reminders[idx] || null, idx);
+    })
+    .catch(function(e) {
+      toast('Could not load reminder: ' + e.message, false);
+    });
 }
 
 function saveReminder(idx) {
