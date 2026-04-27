@@ -1163,9 +1163,13 @@ function renderSettings() {
         '<p style="font-size:12px;color:#6b7280;margin-bottom:14px">Logo URL and app title shown in the header. Use ImgBB or any public image URL. Saves to <code>config/app</code>.</p>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">' +
           fld('App Title', '<input id="aTitle" class="inp" value="' + esc(a.appTitle || 'Bal Gopal Mitra Mandal') + '"/>') +
-          fld('Logo Image URL', '<input id="aLogo" class="inp" placeholder="https://i.ibb.co/..." value="' + esc(a.logoUrl || '') + '"/>') +
+          fld('Logo Image URL (direct link only)',
+            '<input id="aLogo" class="inp" placeholder="https://i.ibb.co/xxxxxx/logo.jpg" value="' + esc(a.logoUrl || '') + '" oninput="validateLogoUrl(this)"/>' +
+            '<p id="logoHint" style="font-size:11px;margin-top:4px;color:#6b7280">' +
+              '\u26A0\uFE0F Use the <strong>direct image link</strong> from ImgBB (starts with <code>https://i.ibb.co/</code>), not the album/viewer page link (ibb.co/...).' +
+            '</p>') +
         '</div>' +
-        (a.logoUrl ? '<img src="' + esc(a.logoUrl) + '" style="height:60px;border-radius:8px;margin-bottom:12px"/>' : '') +
+        (a.logoUrl ? '<img src="' + esc(a.logoUrl) + '" style="height:60px;border-radius:8px;margin-bottom:12px" onerror="this.style.display=\'none\'" />' : '') +
         '<button class="btn btn-primary" onclick="saveBranding()">Save Branding</button>' +
       '</div>' +
 
@@ -1179,7 +1183,13 @@ function renderSettings() {
           fld('Total Days', '<input id="fDays" class="inp" type="number" value="' + (f.totalDays || 10) + '" min="1" max="20"/>') +
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">' +
-          fld('Start Month (1–12)', '<input id="fMonth" class="inp" type="number" min="1" max="12" value="' + (f.startMonth || 8) + '"/>') +
+          fld('Start Month', (function() {
+            var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            var opts = months.map(function(m, i) {
+              return '<option value="' + (i+1) + '"' + ((f.startMonth || 8) === (i+1) ? ' selected' : '') + '>' + m + '</option>';
+            }).join('');
+            return '<select id="fMonth" class="sel">' + opts + '</select>';
+          })()) +
           fld('Start Day', '<input id="fDay" class="inp" type="number" min="1" max="31" value="' + (f.startDay || 22) + '"/>') +
           fld('Start Hour (0–23)', '<input id="fHour" class="inp" type="number" min="0" max="23" value="' + (f.startHour !== undefined ? f.startHour : 6) + '"/>') +
         '</div>' +
@@ -1202,6 +1212,24 @@ function renderSettings() {
     toast('Could not load settings: ' + e.message, false);
   });
 }
+
+function validateLogoUrl(input) {
+  var hint = document.getElementById('logoHint');
+  if (!hint) return;
+  var v = input.value.trim();
+  if (!v) { hint.style.color = '#6b7280'; return; }
+  if (v.startsWith('https://i.ibb.co/') || v.startsWith('https://ibb.co/') === false && v.match(/\.(jpg|jpeg|png|webp|gif)(\?|$)/i)) {
+    hint.style.color = '#16a34a';
+    hint.textContent = '\u2705 Looks like a valid direct image URL.';
+  } else if (v.startsWith('https://ibb.co/') || v.startsWith('http://ibb.co/')) {
+    hint.style.color = '#dc2626';
+    hint.innerHTML = '\u274C This is an ImgBB <strong>gallery page</strong>, not a direct image link. On ImgBB, click the image → right-click → "Copy image address" to get a URL starting with <code>https://i.ibb.co/</code>.';
+  } else {
+    hint.style.color = '#6b7280';
+    hint.textContent = 'Paste a direct image URL (must end in .jpg, .png, etc.)';
+  }
+}
+window.validateLogoUrl = validateLogoUrl;
 
 function saveBranding() {
   db.doc('config/app').set({
