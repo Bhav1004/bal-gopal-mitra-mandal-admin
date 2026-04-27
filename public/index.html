@@ -527,13 +527,32 @@ function renderSchedule() {
   setMain(pageHeader('Schedule', '10-day Ganeshotsav timetable', '+ Add Day', 'openSchedModal(null)') + (list.length ? rows : emptyState('No schedule yet.')));
 }
 
+// Convert "HH:MM" (24h) to "H:MM AM/PM" display string
+function toDisplay12h(hhmm) {
+  if (!hhmm) return '';
+  var p = hhmm.split(':'); var h = parseInt(p[0]); var m = p[1] || '00';
+  var ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+  return h + ':' + m + ' ' + ap;
+}
+// Convert "H:MM AM/PM" back to "HH:MM" for <input type="time">
+function to24h(display) {
+  if (!display) return '';
+  var m = display.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!m) return display;
+  var h = parseInt(m[1]); var min = m[2]; var ap = m[3].toUpperCase();
+  if (ap === 'PM' && h !== 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return h.toString().padStart(2,'0') + ':' + min;
+}
+
 function openSchedModal(d) {
   var evs = d && d.events && d.events.length ? d.events : [{time:'',name:'',notes:''}];
-  var evRows = evs.map(function(e, i) {
-    return '<div class="ev-row" style="display:flex;gap:6px;margin-bottom:6px">' +
-      '<input class="inp ev-time" placeholder="7:00 AM" value="' + esc(e.time || '') + '" style="width:100px"/>' +
+  var evRows = evs.map(function(e) {
+    var val24 = to24h(e.time || '');
+    return '<div class="ev-row" style="display:flex;gap:6px;margin-bottom:6px;align-items:center">' +
+      '<input type="time" class="inp ev-time" value="' + esc(val24) + '" style="width:120px"/>' +
       '<input class="inp ev-name" placeholder="Event name" value="' + esc(e.name || '') + '" style="flex:1"/>' +
-      '<input class="inp ev-note" placeholder="Notes" value="' + esc(e.notes || '') + '" style="flex:1"/>' +
+      '<input class="inp ev-note" placeholder="Notes (optional)" value="' + esc(e.notes || '') + '" style="flex:1"/>' +
     '</div>';
   }).join('');
 
@@ -574,7 +593,7 @@ function saveSched(id) {
   if (!dayNameEn || !date) { toast('Day name (English) and date required', false); return; }
   var rows = document.querySelectorAll('#evContainer .ev-row');
   var events = Array.from(rows).map(function(r) {
-    return { time: r.querySelector('.ev-time').value.trim(), name: r.querySelector('.ev-name').value.trim(), notes: r.querySelector('.ev-note').value.trim() };
+    return { time: toDisplay12h(r.querySelector('.ev-time').value.trim()), name: r.querySelector('.ev-name').value.trim(), notes: r.querySelector('.ev-note').value.trim() };
   }).filter(function(e) { return e.name; });
   var data = {dayNumber:dayNumber, date:date, dayName_en:dayNameEn, dayName_mr:dayNameMr, events:events};
   var p = id ? setFsDoc('schedule', id, data) : addFsDoc('schedule', data);
@@ -643,15 +662,21 @@ function saveAarti(id) {
 }
 
 // ── Feedback ──────────────────────────────────────────────────────────────────
+var fbFilter = 'all';
 function renderFeedback() {
-  var list = state.data.list || [];
+  var list   = state.data.list || [];
   var unread = list.filter(function(f) { return !f.isRead; }).length;
-  var rows = list.map(function(f) {
+  var catColors = { suggestion:'#dbeafe:#1e40af', issue:'#fee2e2:#991b1b', appreciation:'#dcfce7:#166534' };
+  var filtered = fbFilter === 'all' ? list : list.filter(function(f) { return (f.category || 'appreciation') === fbFilter; });
+  var rows = filtered.map(function(f) {
     var stars = '\u2605'.repeat(f.rating || 0) + '\u2606'.repeat(5 - (f.rating || 0));
+    var cat = f.category || 'appreciation'; var cc = (catColors[cat] || '#f3f4f6:#374151').split(':');
+    var catBadge = '<span style="background:' + cc[0] + ';color:' + cc[1] + ';font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;text-transform:capitalize">' + cat + '</span>';
     return '<div class="card p4" style="margin-bottom:10px;' + (!f.isRead ? 'border-color:#fdba74;background:#fff7ed' : '') + '">' +
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">' +
         '<div style="flex:1">' +
-          '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+            catBadge +
             '<span style="font-weight:600;font-size:13px;color:#111">' + (f.isAnonymous ? '\uD83D\uDD75\uFE0F Anonymous' : '\uD83D\uDC64 ' + esc(f.name || '')) + '</span>' +
             (!f.isAnonymous && f.phone ? '<span style="font-size:12px;color:#6b7280">\uD83D\uDCF1 ' + esc(f.phone) + '</span>' : '') +
             (f.rating ? '<span style="color:#f59e0b;font-size:13px">' + stars + '</span>' : '') +
@@ -665,10 +690,17 @@ function renderFeedback() {
     '</div>';
   }).join('');
 
+  var filterBar = '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">' +
+    ['all','suggestion','issue','appreciation'].map(function(c) {
+      return '<button onclick="fbFilter=\'' + c + '\';renderFeedback()" style="padding:5px 14px;border-radius:999px;border:1px solid ' + (fbFilter===c?'#ea580c':'#d1d5db') + ';background:' + (fbFilter===c?'#ea580c':'#fff') + ';color:' + (fbFilter===c?'#fff':'#374151') + ';font-size:13px;cursor:pointer;text-transform:capitalize">' + (c==='all'?'All':c) + '</button>';
+    }).join('') +
+  '</div>';
+
   setMain(
     pageHeader('Feedback', 'Resident submissions \u2014 read only', '', '') +
-    (unread ? '<p style="font-size:13px;background:#ffedd5;color:#c2410c;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-weight:500">' + unread + ' unread submission' + (unread > 1 ? 's' : '') + '</p>' : '') +
-    (list.length ? rows : emptyState('No feedback yet.'))
+    (unread ? '<p style="font-size:13px;background:#ffedd5;color:#c2410c;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-weight:500">' + unread + ' unread</p>' : '') +
+    filterBar +
+    (filtered.length ? rows : emptyState('No feedback in this category.'))
   );
 }
 function markRead(id) {
@@ -754,25 +786,47 @@ function delAlbum(id) {
   });
 }
 function uploadPhotos(files) {
-  if (!files || !state.activeAlbum) return;
+  if (!files || files.length === 0) return;
+  if (!state.activeAlbum) {
+    toast('Please select an album first before uploading photos', false);
+    return;
+  }
   var a = state.activeAlbum;
-  var done = 0, total = files.length, newPhotos = [];
+  var done = 0, failed = 0, total = files.length, newPhotos = [];
+
+  toast('Uploading ' + total + ' photo(s)…');
+
   Array.from(files).forEach(function(f) {
-    var path = 'gallery/' + a.id + '/' + Date.now() + '_' + f.name;
-    storage.ref(path).put(f).then(function(snap) {
-      return snap.ref.getDownloadURL();
-    }).then(function(url) {
-      newPhotos.push({url:url, storagePath:path, timestamp:Date.now()});
-      done++;
-      if (done === total) {
-        var photos = (a.photos || []).concat(newPhotos);
-        setFsDoc('gallery', a.id, {photos:photos, coverUrl:photos[0].url}).then(function() {
-          state.activeAlbum.photos = photos;
-          state.activeAlbum.coverUrl = photos[0].url;
-          toast(total + ' photo(s) uploaded'); renderGallery();
-        });
-      }
-    }).catch(function(e) { toast('Upload error: ' + e.message, false); });
+    // Validate file size (max 10 MB)
+    if (f.size > 10 * 1024 * 1024) {
+      toast('File "' + f.name + '" is too large (max 10 MB)', false);
+      failed++; done++;
+      return;
+    }
+    var path = 'gallery/' + a.id + '/' + Date.now() + '_' + f.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    storage.ref(path).put(f)
+      .then(function(snap) { return snap.ref.getDownloadURL(); })
+      .then(function(url) {
+        newPhotos.push({url:url, storagePath:path, timestamp:Date.now()});
+        done++;
+        if (done === total) {
+          if (newPhotos.length === 0) { toast('All uploads failed. Check Firebase Storage rules.', false); return; }
+          var photos = (a.photos || []).concat(newPhotos);
+          setFsDoc('gallery', a.id, {photos:photos, coverUrl:photos[0].url}).then(function() {
+            state.activeAlbum.photos = photos;
+            state.activeAlbum.coverUrl = photos[0].url;
+            toast(newPhotos.length + ' photo(s) uploaded' + (failed ? ', ' + failed + ' failed' : ''));
+            renderGallery();
+          });
+        }
+      })
+      .catch(function(e) {
+        failed++; done++;
+        var msg = e.code === 'storage/unauthorized'
+          ? 'Permission denied. Go to Firebase Console → Storage → Rules and allow authenticated writes.'
+          : 'Upload error: ' + e.message;
+        toast(msg, false);
+      });
   });
 }
 function delPhoto(idx) {
@@ -838,10 +892,79 @@ function renderNotifications() {
       '<p id="notifStatus" style="margin-top:12px;font-size:13px;display:none"></p>' +
     '</div>' +
 
+    '<div class="card p5" style="margin-bottom:24px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+        '<h3 style="font-weight:600;font-size:15px;color:#111">⏰ Scheduled Reminders</h3>' +
+        '<button class="btn btn-ghost btn-sm" onclick="openReminderModal(null)">+ Add Reminder</button>' +
+      '</div>' +
+      '<p style="font-size:12px;color:#6b7280;margin-bottom:14px">These reminders are delivered locally on each device at the configured time. Changes take effect the next time a user opens the app.</p>' +
+      '<div id="reminderList"><p style="font-size:13px;color:#9ca3af">Loading…</p></div>' +
+    '</div>' +
+
     '<h3 style="font-weight:600;font-size:15px;color:#111;margin-bottom:12px">Recent History</h3>' +
     histRows
   );
+
+  loadReminders();
 }
+
+// ── Scheduled Reminders ───────────────────────────────────────────────────────
+function loadReminders() {
+  db.doc('config/notifications').get().then(function(doc) {
+    var reminders = (doc.exists && doc.data().reminders) ? doc.data().reminders : [];
+    var el = document.getElementById('reminderList');
+    if (!el) return;
+    if (!reminders.length) { el.innerHTML = '<p style="font-size:13px;color:#9ca3af">No reminders configured. Add one above.</p>'; return; }
+    el.innerHTML = reminders.map(function(r, i) {
+      return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6">' +
+        '<span style="font-size:20px;min-width:28px">' + (r.enabled ? '🔔' : '🔕') + '</span>' +
+        '<div style="flex:1">' +
+          '<p style="font-weight:600;font-size:13px;color:#111">' + esc(r.label || r.title) + '</p>' +
+          '<p style="font-size:12px;color:#6b7280">' + (r.hour || 0).toString().padStart(2,'0') + ':' + (r.minute || 0).toString().padStart(2,'0') + ' — ' + esc(r.body || '') + '</p>' +
+        '</div>' +
+        '<button class="btn btn-ghost btn-sm" onclick="openReminderModal(' + i + ')">Edit</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteReminder(' + i + ')">Delete</button>' +
+      '</div>';
+    }).join('');
+  });
+}
+
+function openReminderModal(idx) {
+  db.doc('config/notifications').get().then(function(doc) {
+    var reminders = (doc.exists && doc.data().reminders) ? doc.data().reminders : [];
+    var r = idx !== null ? reminders[idx] : null;
+    var hVal = r ? r.hour.toString().padStart(2,'0') + ':' + r.minute.toString().padStart(2,'0') : '07:00';
+    showModal(r ? 'Edit Reminder' : 'New Reminder',
+      fld('Label', '<input id="rLabel" class="inp" value="' + esc(r ? r.label : '') + '" placeholder="e.g. Morning Aarti"/>') +
+      fld('Time', '<input type="time" id="rTime" class="inp" value="' + hVal + '" style="max-width:160px"/>') +
+      fld('Notification Title', '<input id="rTitle" class="inp" value="' + esc(r ? r.title : '') + '" placeholder="🕯️ Morning Aarti"/>') +
+      fld('Notification Body', '<textarea id="rBody" class="inp" rows="2">' + esc(r ? r.body : '') + '</textarea>') +
+      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px;cursor:pointer"><input type="checkbox" id="rEnabled"' + (r && r.enabled !== false ? ' checked' : r ? '' : ' checked') + ' style="width:15px;height:15px;accent-color:#ea580c"/> Enabled</label>',
+      'saveReminder(' + (idx !== null ? idx : -1) + ')',
+      r ? 'Save' : 'Add Reminder'
+    );
+  });
+}
+
+function saveReminder(idx) {
+  var t = ($('rTime') ? $('rTime').value : '').split(':');
+  var newR = { id: idx >= 0 ? (idx + 1001) : Date.now(), label: $('rLabel').value.trim(), title: $('rTitle').value.trim(), body: $('rBody').value.trim(), hour: parseInt(t[0]||7), minute: parseInt(t[1]||0), enabled: $('rEnabled').checked };
+  db.doc('config/notifications').get().then(function(doc) {
+    var reminders = (doc.exists && doc.data().reminders) ? doc.data().reminders.slice() : [];
+    if (idx >= 0) reminders[idx] = newR; else reminders.push(newR);
+    return db.doc('config/notifications').set({reminders: reminders}, {merge: true});
+  }).then(function() { toast('Reminder saved'); closeModal(); loadReminders(); }).catch(function(e) { toast('Save failed: ' + e.message, false); });
+}
+
+function deleteReminder(idx) {
+  if (!confirm('Delete this reminder?')) return;
+  db.doc('config/notifications').get().then(function(doc) {
+    var reminders = (doc.exists && doc.data().reminders) ? doc.data().reminders.slice() : [];
+    reminders.splice(idx, 1);
+    return db.doc('config/notifications').set({reminders: reminders}, {merge: true});
+  }).then(function() { toast('Reminder deleted'); loadReminders(); });
+}
+window.openReminderModal = openReminderModal; window.saveReminder = saveReminder; window.deleteReminder = deleteReminder;
 
 var WORKER_URL = 'https://frosty-salad-a110.bhavin-others.workers.dev';
 
