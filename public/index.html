@@ -788,54 +788,85 @@ function delAlbum(id) {
 function uploadPhotos(files) {
   if (!files || files.length === 0) return;
   if (!state.activeAlbum) {
-    toast('Please select an album first before uploading photos', false);
+    toast('Select or create an album first, then upload photos.', false);
     return;
   }
+  if (!IMGBB_API_KEY || IMGBB_API_KEY === 'YOUR_IMGBB_API_KEY') {
+    toast('Paste your ImgBB API key into the IMGBB_API_KEY variable in index.html first.', false);
+    return;
+  }
+
   var a = state.activeAlbum;
   var done = 0, failed = 0, total = files.length, newPhotos = [];
 
   toast('Uploading ' + total + ' photo(s)…');
 
   Array.from(files).forEach(function(f) {
-    // Validate file size (max 10 MB)
-    if (f.size > 10 * 1024 * 1024) {
-      toast('File "' + f.name + '" is too large (max 10 MB)', false);
+    if (f.size > 32 * 1024 * 1024) {
+      toast('File "' + f.name + '" is too large (max 32 MB)', false);
       failed++; done++;
+      if (done === total) finishUpload(newPhotos, failed, a);
       return;
     }
-    var path = 'gallery/' + a.id + '/' + Date.now() + '_' + f.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    storage.ref(path).put(f)
-      .then(function(snap) { return snap.ref.getDownloadURL(); })
-      .then(function(url) {
-        newPhotos.push({url:url, storagePath:path, timestamp:Date.now()});
-        done++;
-        if (done === total) {
-          if (newPhotos.length === 0) { toast('All uploads failed. Check Firebase Storage rules.', false); return; }
-          var photos = (a.photos || []).concat(newPhotos);
-          setFsDoc('gallery', a.id, {photos:photos, coverUrl:photos[0].url}).then(function() {
-            state.activeAlbum.photos = photos;
-            state.activeAlbum.coverUrl = photos[0].url;
-            toast(newPhotos.length + ' photo(s) uploaded' + (failed ? ', ' + failed + ' failed' : ''));
-            renderGallery();
-          });
-        }
+
+    var fd = new FormData();
+    fd.append('image', f);
+    fd.append('name', f.name.replace(/\.[^/.]+$/, ''));
+
+    fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY, {
+      method: 'POST',
+      body: fd
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (!data.success) throw new Error(data.error && data.error.message || 'Upload failed');
+        newPhotos.push({
+          url:        data.data.url,          // full-size display URL
+          thumb:      data.data.thumb.url,    // thumbnail URL
+          deleteUrl:  data.data.delete_url,   // save this to allow deletion
+          timestamp:  Date.now()
+        });
       })
       .catch(function(e) {
-        failed++; done++;
-        var msg = e.code === 'storage/unauthorized'
-          ? 'Permission denied. Go to Firebase Console → Storage → Rules and allow authenticated writes.'
-          : 'Upload error: ' + e.message;
-        toast(msg, false);
+        failed++;
+        console.error('ImgBB upload error:', e);
+        toast('Upload failed: ' + e.message, false);
+      })
+      .finally(function() {
+        done++;
+        if (done === total) finishUpload(newPhotos, failed, a);
       });
   });
 }
+
+function finishUpload(newPhotos, failed, a) {
+  if (newPhotos.length === 0) {
+    toast('All uploads failed. Check your ImgBB API key.', false);
+    return;
+  }
+  var photos = (a.photos || []).concat(newPhotos);
+  setFsDoc('gallery', a.id, { photos: photos, coverUrl: photos[0].url }).then(function() {
+    state.activeAlbum.photos = photos;
+    state.activeAlbum.coverUrl = photos[0].url;
+    toast(newPhotos.length + ' photo(s) uploaded' + (failed ? ', ' + failed + ' failed' : '') + ' ✅');
+    renderGallery();
+  });
+}
+
 function delPhoto(idx) {
   if (!confirm('Delete photo?')) return;
   var a = state.activeAlbum;
   var photo = a.photos[idx];
-  storage.ref(photo.storagePath).delete().catch(function() {});
+
+  // Open the ImgBB delete link in a background tab (ImgBB has no delete API on free plan)
+  // The image will be removed from ImgBB when the link is visited.
+  // Removing from Firestore immediately so it disappears from the app.
+  if (photo.deleteUrl) {
+    window.open(photo.deleteUrl, '_blank');
+  }
+
   var photos = a.photos.filter(function(_, i) { return i !== idx; });
-  setFsDoc('gallery', a.id, {photos:photos, coverUrl:photos[0] ? photos[0].url : ''}).then(function() {
+  setFsDoc('gallery', a.id, { photos: photos, coverUrl: photos[0] ? photos[0].url : '' }).then(function() {
     state.activeAlbum.photos = photos;
     toast('Photo deleted'); renderGallery();
   });
@@ -989,7 +1020,8 @@ function deleteReminder(idx) {
 }
 window.openReminderModal = openReminderModal; window.saveReminder = saveReminder; window.deleteReminder = deleteReminder;
 
-var WORKER_URL = 'https://frosty-salad-a110.bhavin-others.workers.dev';
+var WORKER_URL   = 'https://frosty-salad-a110.bhavin-others.workers.dev';  // FCM notifications
+var IMGBB_API_KEY = 'YOUR_IMGBB_API_KEY';  // ← paste your key from api.imgbb.com (free, no credit card)
 
 function sendNotif() {
   var title  = $('nTitle') ? $('nTitle').value.trim() : '';
