@@ -1196,6 +1196,17 @@ function renderSettings() {
         '<button class="btn btn-primary" onclick="saveFestivalConfig()">Save Festival Config</button>' +
       '</div>' +
 
+      // ── Firestore Rules ───────────────────────────────────────────────────
+      '<div class="card p5" style="margin-bottom:16px;border:2px solid #fca5a5">' +
+        '<h3 style="font-size:15px;font-weight:600;color:#dc2626;margin-bottom:4px">\uD83D\uDEE1\uFE0F Firestore Security Rules</h3>' +
+        '<p style="font-size:12px;color:#6b7280;margin-bottom:12px">If the logo, gallery, or config data is not loading in the app — the security rules have not been deployed yet. Copy the rules below and paste them in <strong>Firebase Console → Firestore → Rules → Edit rules → Publish</strong>.</p>' +
+        '<div style="position:relative">' +
+          '<pre id="rulesBlock" style="background:#1e293b;color:#e2e8f0;padding:16px;border-radius:8px;font-size:12px;overflow-x:auto;line-height:1.6;margin:0">rules_version = \'2\';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    match /updates/{doc}  { allow read: if true; allow write: if request.auth != null; }\n    match /schedule/{doc} { allow read: if true; allow write: if request.auth != null; }\n    match /aartis/{doc}   { allow read: if true; allow write: if request.auth != null; }\n    match /gallery/{doc}  { allow read: if true; allow write: if request.auth != null; }\n\n    match /feedback/{doc} {\n      allow create: if true;\n      allow read, update, delete: if request.auth != null;\n    }\n    match /device_tokens/{doc} {\n      allow create: if true;\n      allow read, update, delete: if request.auth != null;\n    }\n    match /notification_history/{doc} { allow read, write: if request.auth != null; }\n    match /config/{doc} {\n      allow read: if true;\n      allow write: if request.auth != null;\n    }\n  }\n}</pre>' +
+          '<button onclick="copyRules()" style="position:absolute;top:8px;right:8px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">\uD83D\uDCCB Copy</button>' +
+        '</div>' +
+        '<p style="font-size:12px;color:#dc2626;margin-top:10px;font-weight:500">After publishing the rules, force-close and reopen the app. The logo and gallery will load immediately.</p>' +
+      '</div>' +
+
       // ── Daily Quote ───────────────────────────────────────────────────────
       '<div class="card p5" style="margin-bottom:16px">' +
         '<h3 style="font-size:15px;font-weight:600;color:#111;margin-bottom:4px">\uD83E\uDE94 Daily Blessing / Quote</h3>' +
@@ -1250,6 +1261,24 @@ function saveQuote() {
   .catch(function(e) { toast('Save failed: ' + e.message, false); });
 }
 window.saveBranding = saveBranding; window.saveQuote = saveQuote;
+
+function copyRules() {
+  var el = document.getElementById('rulesBlock');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(function() {
+    toast('Rules copied! Now paste in Firebase Console → Firestore → Rules → Publish \u2705');
+  }).catch(function() {
+    // Fallback for older browsers
+    var ta = document.createElement('textarea');
+    ta.value = el.textContent;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('Rules copied!');
+  });
+}
+window.copyRules = copyRules;
 
 function saveFestivalConfig() {
   var data = {
