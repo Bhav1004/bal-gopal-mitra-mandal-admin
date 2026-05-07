@@ -915,11 +915,17 @@ function renderNotifications() {
     '</div>' +
 
     '<div class="card p5" style="margin-bottom:24px">' +
-      '<h3 style="font-weight:600;font-size:15px;color:#111;margin-bottom:16px">Send Notification</h3>' +
+      '<h3 style="font-weight:600;font-size:15px;color:#111;margin-bottom:16px">📤 Send Notification</h3>' +
       fld('Title *', '<input id="nTitle" class="inp" placeholder="e.g. Aarti in 30 mins \uD83D\uDE4F" maxlength="60"/>') +
       fld('Body *', '<textarea id="nBody" class="inp" rows="3" placeholder="Evening aarti begins at 7:30 PM. All residents welcome!" maxlength="200"></textarea>') +
+      fld('Category', '<select id="nTag" class="inp" style="max-width:240px">' +
+        '<option value="event">📢 Event / Update (default)</option>' +
+        '<option value="puja">🕯 Puja / Aarti</option>' +
+        '<option value="emergency">🚨 Emergency / Urgent</option>' +
+      '</select>') +
+      fld('Banner Image URL <span style="font-size:11px;color:#9ca3af">(optional — shows full image in notification)</span>', '<input id="nImageUrl" class="inp" placeholder="https://i.ibb.co/... paste a direct image link"/>') +
       '<div style="display:flex;align-items:center;gap:12px">' +
-        '<button class="btn btn-primary" onclick="sendNotif()" id="sendBtn">Send to All Devices</button>' +
+        '<button class="btn btn-primary" onclick="sendNotif()" id="sendBtn">🔔 Send to All Devices</button>' +
         '<p style="font-size:12px;color:#9ca3af">Will be sent to all ' + deviceCount + ' registered device(s)</p>' +
       '</div>' +
       '<p id="notifStatus" style="margin-top:12px;font-size:13px;display:none"></p>' +
@@ -934,11 +940,18 @@ function renderNotifications() {
       '<div id="reminderList"><p style="font-size:13px;color:#9ca3af">Loading…</p></div>' +
     '</div>' +
 
+    '<div class="card p5" style="margin-bottom:24px">' +
+      '<h3 style="font-weight:600;font-size:15px;color:#111;margin-bottom:4px">🔔 Notification Sound</h3>' +
+      '<p style="font-size:12px;color:#6b7280;margin-bottom:14px">Sound played for Aarti reminders. Users must force-stop and reopen the app once for the new sound to take effect (Android limitation).</p>' +
+      '<div id="soundConfig"><p style="font-size:13px;color:#9ca3af">Loading…</p></div>' +
+    '</div>' +
+
     '<h3 style="font-weight:600;font-size:15px;color:#111;margin-bottom:12px">Recent History</h3>' +
     histRows
   );
 
   loadReminders();
+  loadSoundConfig();
 }
 
 // ── Scheduled Reminders ───────────────────────────────────────────────────────
@@ -1022,14 +1035,53 @@ function deleteReminder(idx) {
 }
 window.openReminderModal = openReminderModal; window.saveReminder = saveReminder; window.deleteReminder = deleteReminder;
 
+// ── Notification Sound Config ─────────────────────────────────────────────────
+function loadSoundConfig() {
+  db.doc('config/notifications').get().then(function(doc) {
+    var current = (doc.exists && doc.data() && doc.data().soundName) ? doc.data().soundName : 'bell';
+    var el = document.getElementById('soundConfig');
+    if (!el) return;
+    el.innerHTML =
+      '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+        '<select id="soundSelect" class="inp" style="max-width:220px">' +
+          '<option value="bell"'   + (current === 'bell'    ? ' selected' : '') + '>🔔 Temple Bell (built-in)</option>' +
+          '<option value="shankh"' + (current === 'shankh'  ? ' selected' : '') + '>🎺 Shankh / Conch (built-in)</option>' +
+          '<option value="default"'+ (current === 'default' ? ' selected' : '') + '>🔉 System Default</option>' +
+        '</select>' +
+        '<button class="btn btn-primary btn-sm" onclick="saveSoundConfig()">✓ Save Sound</button>' +
+      '</div>' +
+      '<p style="font-size:11px;color:#9ca3af;margin-top:8px">' +
+        'Current: <strong>' + current + '</strong>. ' +
+        'Built-in sounds are synthesised tones — drop a <code>bell.wav</code> / <code>shankh.wav</code> in <code>app/src/main/res/raw/</code> to use real recordings.' +
+      '</p>';
+  }).catch(function(e) {
+    var el = document.getElementById('soundConfig');
+    if (el) el.innerHTML = '<p style="font-size:13px;color:#dc2626">Could not load: ' + e.message + '</p>';
+  });
+}
+
+function saveSoundConfig() {
+  var sel = document.getElementById('soundSelect');
+  if (!sel) return;
+  var val = sel.value;
+  db.doc('config/notifications').set({ soundName: val }, { merge: true })
+    .then(function() { toast('\uD83D\uDD14 Sound saved: ' + val + '. Users will hear it after restarting the app.'); })
+    .catch(function(e) { toast('Save failed: ' + e.message, false); });
+}
+window.saveSoundConfig = saveSoundConfig;
+window.loadSoundConfig = loadSoundConfig;
+
+
 var WORKER_URL   = 'https://frosty-salad-a110.bhavin-others.workers.dev';  // FCM notifications
 var IMGBB_API_KEY = '97c2626cc542c4d8a3d886add65e775e';  // ← paste your key from api.imgbb.com (free, no credit card)
 
 function sendNotif() {
-  var title  = $('nTitle') ? $('nTitle').value.trim() : '';
-  var body   = $('nBody')  ? $('nBody').value.trim()  : '';
-  var status = $('notifStatus');
-  var btn    = $('sendBtn');
+  var title    = $('nTitle')    ? $('nTitle').value.trim()    : '';
+  var body     = $('nBody')     ? $('nBody').value.trim()     : '';
+  var tag      = $('nTag')      ? $('nTag').value             : 'event';
+  var imageUrl = $('nImageUrl') ? $('nImageUrl').value.trim() : '';
+  var status   = $('notifStatus');
+  var btn      = $('sendBtn');
 
   if (!title || !body) { toast('Title and body required', false); return; }
   if (btn) { btn.textContent = 'Sending\u2026'; btn.disabled = true; }
@@ -1058,7 +1110,7 @@ function sendNotif() {
       return fetch(WORKER_URL, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ token: token, title: title, body: body })
+        body:    JSON.stringify({ token: token, title: title, body: body, tag: tag, imageUrl: imageUrl })
       }).then(function(res) { return res.json(); })
         .then(function(json) {
           // FCM v1 success: { name: "projects/.../messages/..." }
@@ -1087,7 +1139,8 @@ function sendNotif() {
 
       // 3. Log to Firestore history
       addFsDoc('notification_history', {
-        title: title, body: body,
+        title: title, body: body, tag: tag,
+        imageUrl:     imageUrl || null,
         sentAt:       new Date(),
         sentBy:       state.user ? state.user.email : 'admin',
         successCount: ok,
@@ -1095,8 +1148,9 @@ function sendNotif() {
         totalDevices: tokens.length
       });
 
-      if ($('nTitle')) $('nTitle').value = '';
-      if ($('nBody'))  $('nBody').value  = '';
+      if ($('nTitle'))    $('nTitle').value    = '';
+      if ($('nBody'))     $('nBody').value     = '';
+      if ($('nImageUrl')) $('nImageUrl').value = '';
       setTimeout(function() { loadAndRender('notifications'); }, 1500);
     });
 
